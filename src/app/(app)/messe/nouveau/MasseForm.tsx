@@ -7,18 +7,19 @@ import { Plus, X, GripVertical } from "lucide-react";
 
 type SongRow = { id: string; title: string; liturgical_type: string | null; key_signature: string | null };
 type OrderEntry = { song_id: string; position: number; notes?: string };
+type Initial = { id: string; title: string; date?: string | null; liturgical_season?: string | null; notes?: string | null; initialOrder?: OrderEntry[] };
 
-type Props = { choirId: string; songs: SongRow[] };
+type Props = { choirId: string; songs: SongRow[]; initial?: Initial };
 
 const ORDER_LABELS = LITURGICAL_TYPE_VALUES;
 
-export default function MasseForm({ choirId, songs }: Props) {
+export default function MasseForm({ choirId, songs, initial }: Props) {
   const router  = useRouter();
-  const [title,   setTitle]   = useState("");
-  const [date,    setDate]    = useState("");
-  const [season,  setSeason]  = useState("");
-  const [notes,   setNotes]   = useState("");
-  const [order,   setOrder]   = useState<OrderEntry[]>([]);
+  const [title,   setTitle]   = useState(initial?.title ?? "");
+  const [date,    setDate]    = useState(initial?.date?.slice(0, 10) ?? "");
+  const [season,  setSeason]  = useState(initial?.liturgical_season ?? "");
+  const [notes,   setNotes]   = useState(initial?.notes ?? "");
+  const [order,   setOrder]   = useState<OrderEntry[]>(initial?.initialOrder ?? []);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
 
@@ -39,27 +40,31 @@ export default function MasseForm({ choirId, songs }: Props) {
     setLoading(true); setError("");
 
     const supabase = createClient();
-    const { data: sheet, error: err } = await supabase
-      .from("mass_sheets")
-      .insert({
-        choir_id: choirId,
-        title: title.trim(),
-        date: date || null,
-        liturgical_season: season || null,
-        notes: notes || null,
-      })
-      .select("id")
-      .single();
+    let sheetId: string;
 
-    if (err || !sheet) { setError(err?.message ?? "Erreur"); setLoading(false); return; }
+    if (initial?.id) {
+      const { error: err } = await supabase.from("mass_sheets").update({
+        title: title.trim(), date: date || null, liturgical_season: season || null, notes: notes || null,
+      }).eq("id", initial.id);
+      if (err) { setError(err.message); setLoading(false); return; }
+      await supabase.from("mass_sheet_songs").delete().eq("mass_sheet_id", initial.id);
+      sheetId = initial.id;
+    } else {
+      const { data: sheet, error: err } = await supabase
+        .from("mass_sheets")
+        .insert({ choir_id: choirId, title: title.trim(), date: date || null, liturgical_season: season || null, notes: notes || null })
+        .select("id").single();
+      if (err || !sheet) { setError(err?.message ?? "Erreur"); setLoading(false); return; }
+      sheetId = sheet.id;
+    }
 
     if (order.length > 0) {
       await supabase.from("mass_sheet_songs").insert(
-        order.map((e) => ({ mass_sheet_id: sheet.id, song_id: e.song_id, position: e.position }))
+        order.map((e) => ({ mass_sheet_id: sheetId, song_id: e.song_id, position: e.position }))
       );
     }
 
-    router.push(`/messe/${sheet.id}`);
+    router.push(`/messe/${sheetId}`);
   }
 
   const selectedIds = new Set(order.map((e) => e.song_id));
@@ -188,7 +193,7 @@ export default function MasseForm({ choirId, songs }: Props) {
           Annuler
         </button>
         <button type="submit" disabled={loading} className="btn btn-primary flex-1 justify-center">
-          {loading ? "Création…" : "Créer la feuille"}
+          {loading ? "Enregistrement…" : initial?.id ? "Enregistrer" : "Créer la feuille"}
         </button>
       </div>
     </form>

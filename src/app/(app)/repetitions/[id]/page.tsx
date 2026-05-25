@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Music } from "lucide-react";
+import { ArrowLeft, Calendar, Music, Edit2 } from "lucide-react";
 import { LITURGICAL_GRADIENTS } from "@/types";
+import DeleteRehearsalButton from "./DeleteRehearsalButton";
+import MasteryButton from "./MasteryButton";
 
 export default async function RehearsalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,7 +17,7 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
 
   const { data: rehearsalSongs } = await supabase
     .from("rehearsal_songs")
-    .select("order_index, songs(id,title,liturgical_type,key_signature,status,composer)")
+    .select("order_index, songs(id,title,liturgical_type,key_signature,status,composer,difficulty)")
     .eq("rehearsal_id", id)
     .order("order_index");
 
@@ -31,10 +33,18 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 space-y-5 fade-in">
-      <Link href="/repetitions" className="flex items-center gap-2 text-sm font-medium"
-        style={{ color: "var(--text-2)" }}>
-        <ArrowLeft className="w-4 h-4" /> Répétitions
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/repetitions" className="flex items-center gap-2 text-sm font-medium"
+          style={{ color: "var(--text-2)" }}>
+          <ArrowLeft className="w-4 h-4" /> Répétitions
+        </Link>
+        <div className="flex gap-2">
+          <Link href={`/repetitions/${id}/modifier`} className="btn btn-secondary btn-sm" style={{ padding: "0.4rem 0.85rem", fontSize: "0.8rem" }}>
+            <Edit2 className="w-3.5 h-3.5" /> Modifier
+          </Link>
+          <DeleteRehearsalButton id={id} />
+        </div>
+      </div>
 
       {/* Hero */}
       <div className="card overflow-hidden" style={{ padding: 0 }}>
@@ -74,22 +84,25 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
               const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#7F77DD,#1D9E75)";
               return (
                 <div key={i}>
-                  <Link href={`/chants/${song.id}`} className="song-row">
+                  <div className="song-row">
                     <span className="w-6 text-center text-sm font-black flex-shrink-0"
                       style={{ color: "var(--text-3)" }}>
                       {entry.order_index}
                     </span>
-                    <div className="cover-art flex-shrink-0"
-                      style={{ background: grad, width: 42, height: 42, fontSize: "0.6rem", fontWeight: 900 }}>
-                      {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-white truncate">{song.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
-                        {[song.composer, song.key_signature].filter(Boolean).join(" · ") || song.liturgical_type || "—"}
-                      </p>
-                    </div>
-                  </Link>
+                    <Link href={`/chants/${song.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="cover-art flex-shrink-0"
+                        style={{ background: grad, width: 42, height: 42, fontSize: "0.6rem", fontWeight: 900 }}>
+                        {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-white truncate">{song.title}</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
+                          {[song.composer, song.key_signature].filter(Boolean).join(" · ") || song.liturgical_type || "—"}
+                        </p>
+                      </div>
+                    </Link>
+                    <MasteryButton songId={song.id} initialStatus={song.status ?? "nouveau"} />
+                  </div>
                   {i < songs.length - 1 && <div className="divider mx-3" />}
                 </div>
               );

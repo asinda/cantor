@@ -6,7 +6,7 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
 
 export const LITURGICAL_TYPE_VALUES = [
   "entrée", "kyrie", "gloria", "psaume", "alléluia",
-  "sanctus", "agnus dei", "communion", "sortie",
+  "offertoire", "sanctus", "agnus dei", "notre père", "communion", "sortie",
 ] as const;
 export type LiturgicalType = (typeof LITURGICAL_TYPE_VALUES)[number];
 
@@ -47,8 +47,10 @@ export const LITURGICAL_GRADIENTS: Record<string, string> = {
   "gloria":     "linear-gradient(135deg, #d97706 0%, #ea580c 100%)",
   "psaume":     "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
   "alléluia":   "linear-gradient(135deg, #ca8a04 0%, #d97706 100%)",
+  "offertoire": "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
   "sanctus":    "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
   "agnus dei":  "linear-gradient(135deg, #dc2626 0%, #be185d 100%)",
+  "notre père": "linear-gradient(135deg, #0f766e 0%, #0d9488 100%)",
   "communion":  "linear-gradient(135deg, #16a34a 0%, #059669 100%)",
   "sortie":     "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
 };
@@ -84,6 +86,7 @@ export type Choir = {
   name: string;
   description: string | null;
   owner_id: string;
+  invite_code: string | null;
   created_at: string;
 };
 
@@ -92,6 +95,7 @@ export type Song = {
   choir_id: string;
   created_by: string | null;
   title: string;
+  composer: string | null;
   languages: string[];
   liturgical_type: string | null;
   liturgical_season: string | null;
@@ -109,6 +113,7 @@ export type Song = {
   audio_bass: string | null;
   musical_notes: string | null;
   internal_notes: string | null;
+  notes: string | null;
   status: string;
   created_at: string;
   updated_at: string;

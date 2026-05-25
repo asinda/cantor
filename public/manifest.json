@@ -1,0 +1,21 @@
+{
+  "name": "Cantor — Chorale liturgique",
+  "short_name": "Cantor",
+  "description": "Gestionnaire intelligent de répertoire pour chorales liturgiques",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1B2B",
+  "theme_color": "#C9A227",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any",     "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "categories": ["music", "education", "productivity"],
+  "lang": "fr",
+  "shortcuts": [
+    { "name": "Bibliothèque", "url": "/chants",      "description": "Accéder aux chants" },
+    { "name": "Répétitions",  "url": "/repetitions", "description": "Voir les répétitions" },
+    { "name": "Messe",        "url": "/messe",       "description": "Feuilles de messe" }
+  ]
+}
