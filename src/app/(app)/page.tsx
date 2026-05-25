@@ -17,15 +17,23 @@ export default async function DashboardPage() {
   const choirId = (membership as any)?.choir_id;
 
   let songs: any[] = [], rehearsals: any[] = [], sheets: any[] = [];
+  let songsTotal = 0, rehearsalsTotal = 0, sheetsTotal = 0;
+
   if (choirId) {
-    const [r0, r1, r2] = await Promise.all([
+    const [r0, r1, r2, c0, c1, c2] = await Promise.all([
       supabase.from("songs").select("id,title,liturgical_type,status,key_signature,composer").eq("choir_id", choirId).order("updated_at", { ascending: false }).limit(6),
       supabase.from("rehearsals").select("id,date,notes").eq("choir_id", choirId).order("date", { ascending: false }).limit(3),
       supabase.from("mass_sheets").select("id,title,date").eq("choir_id", choirId).order("created_at", { ascending: false }).limit(3),
+      supabase.from("songs").select("*", { count: "exact", head: true }).eq("choir_id", choirId),
+      supabase.from("rehearsals").select("*", { count: "exact", head: true }).eq("choir_id", choirId),
+      supabase.from("mass_sheets").select("*", { count: "exact", head: true }).eq("choir_id", choirId),
     ]);
-    songs      = r0.data ?? [];
-    rehearsals = r1.data ?? [];
-    sheets     = r2.data ?? [];
+    songs            = r0.data ?? [];
+    rehearsals       = r1.data ?? [];
+    sheets           = r2.data ?? [];
+    songsTotal       = c0.count ?? 0;
+    rehearsalsTotal  = c1.count ?? 0;
+    sheetsTotal      = c2.count ?? 0;
   }
 
   const name      = user?.user_metadata?.full_name?.split(" ")[0] ?? "Chantre";
@@ -72,9 +80,9 @@ export default async function DashboardPage() {
       {choirId && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Chants",       value: songs.length,      icon: Music,    href: "/chants",       color: "#7F77DD" },
-            { label: "Répétitions",  value: rehearsals.length, icon: Calendar, href: "/repetitions",  color: "#F59E0B" },
-            { label: "Feuilles",     value: sheets.length,     icon: BookOpen, href: "/messe",        color: "#1D9E75" },
+            { label: "Chants",       value: songsTotal,       icon: Music,    href: "/chants",       color: "#7F77DD" },
+            { label: "Répétitions",  value: rehearsalsTotal,  icon: Calendar, href: "/repetitions",  color: "#F59E0B" },
+            { label: "Feuilles",     value: sheetsTotal,      icon: BookOpen, href: "/messe",        color: "#1D9E75" },
           ].map(({ label, value, icon: Icon, href, color }) => (
             <Link key={label} href={href}
               className="card flex flex-col gap-2 hover:border-opacity-40 transition-all active:scale-[0.97]"

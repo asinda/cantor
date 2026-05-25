@@ -1,23 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { LITURGICAL_GRADIENTS, STATUS_BG, LITURGICAL_TYPES } from "@/types";
+import { LITURGICAL_GRADIENTS, STATUS_BG, LITURGICAL_TYPES, DIFFICULTIES, SONG_STATUSES } from "@/types";
+
+const DIFF_COLORS: Record<string, string> = {
+  facile:    "#4ade80",
+  moyen:     "#C9A227",
+  difficile: "#f87171",
+};
 
 export default async function SongsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; diff?: string; status?: string }>;
 }) {
-  const { q, type } = await searchParams;
+  const { q, type, diff, status } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: membership } = await supabase
-    .from("choir_members")
-    .select("choir_id")
-    .eq("user_id", user!.id)
-    .limit(1)
-    .single();
+    .from("choir_members").select("choir_id").eq("user_id", user!.id).limit(1).single();
 
   const choirId = (membership as any)?.choir_id;
   let songs: any[] = [];
@@ -25,18 +27,28 @@ export default async function SongsPage({
   if (choirId) {
     let query = supabase
       .from("songs")
-      .select("id,title,liturgical_type,status,key_signature,composer,languages")
+      .select("id,title,liturgical_type,status,difficulty,key_signature,composer,languages,tempo_bpm")
       .eq("choir_id", choirId)
       .order("title");
 
-    if (q)    query = query.ilike("title", `%${q}%`);
-    if (type) query = query.eq("liturgical_type", type);
+    if (q)      query = query.ilike("title", `%${q}%`);
+    if (type)   query = query.eq("liturgical_type", type);
+    if (diff)   query = query.eq("difficulty", diff);
+    if (status) query = query.eq("status", status);
 
     const { data } = await query;
     songs = data ?? [];
   }
 
   const GRAD: Record<string, string> = LITURGICAL_GRADIENTS;
+
+  function buildHref(overrides: Record<string, string | undefined>) {
+    const params = new URLSearchParams();
+    const merged = { q, type, diff, status, ...overrides };
+    Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
+    const str = params.toString();
+    return `/chants${str ? `?${str}` : ""}`;
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 space-y-5 fade-in">
@@ -57,27 +69,61 @@ export default async function SongsPage({
       {/* Search */}
       <form method="GET" className="relative">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Rechercher un chant…"
-          className="pl-10"
-          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-        />
+        <input name="q" defaultValue={q} placeholder="Rechercher un chant…"
+          className="pl-10" style={{ background: "var(--surface)", border: "1px solid var(--border)" }} />
+        {type   && <input type="hidden" name="type"   value={type} />}
+        {diff   && <input type="hidden" name="diff"   value={diff} />}
+        {status && <input type="hidden" name="status" value={status} />}
       </form>
 
-      {/* Type filters */}
+      {/* Type liturgique */}
       <div className="h-scroll">
-        <Link href="/chants"
-          className={`chip flex-shrink-0 ${!type ? "chip-on" : "chip-off"}`}>
-          Tous
-        </Link>
+        <Link href={buildHref({ type: undefined })}
+          className={`chip flex-shrink-0 ${!type ? "chip-on" : "chip-off"}`}>Tous</Link>
         {LITURGICAL_TYPES.map((t) => (
-          <Link key={t.value} href={`/chants?type=${t.value}${q ? `&q=${q}` : ""}`}
+          <Link key={t.value} href={buildHref({ type: t.value })}
             className={`chip flex-shrink-0 ${type === t.value ? "chip-on" : "chip-off"}`}>
             {t.label}
           </Link>
         ))}
+      </div>
+
+      {/* Difficulté + Statut */}
+      <div className="flex gap-4 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+            Difficulté :
+          </span>
+          <div className="flex gap-1">
+            {DIFFICULTIES.map((d) => (
+              <Link key={d} href={buildHref({ diff: diff === d ? undefined : d })}
+                className="chip text-xs py-1 px-2.5"
+                style={{
+                  background: diff === d ? `${DIFF_COLORS[d]}20` : "var(--surface-2)",
+                  color:      diff === d ? DIFF_COLORS[d]         : "var(--text-2)",
+                  border:     `1px solid ${diff === d ? DIFF_COLORS[d] + "50" : "var(--border)"}`,
+                  borderRadius: "0.75rem",
+                }}>
+                {d}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
+            Statut :
+          </span>
+          <div className="flex gap-1">
+            {SONG_STATUSES.map((s) => (
+              <Link key={s} href={buildHref({ status: status === s ? undefined : s })}
+                className={`chip text-xs py-1 px-2.5 ${status === s ? STATUS_BG[s] ?? "" : "chip-off"}`}
+                style={{ borderRadius: "0.75rem" }}>
+                {s.replace("_", " ")}
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* No choir */}
@@ -89,14 +135,14 @@ export default async function SongsPage({
         </div>
       )}
 
-      {/* Empty state */}
+      {/* Empty */}
       {choirId && songs.length === 0 && (
         <div className="card text-center py-12 space-y-4">
           <p className="text-4xl">🎼</p>
           <div>
             <p className="font-black text-white text-lg">Aucun chant trouvé</p>
             <p className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
-              {q || type ? "Modifiez vos filtres ou " : ""}Ajoutez votre premier chant.
+              {(q || type || diff || status) ? "Modifiez vos filtres ou " : ""}Ajoutez votre premier chant.
             </p>
           </div>
           <Link href="/chants/nouveau" className="btn btn-primary inline-flex">
@@ -105,34 +151,38 @@ export default async function SongsPage({
         </div>
       )}
 
-      {/* Songs list */}
+      {/* Liste */}
       {songs.length > 0 && (
         <div className="card" style={{ padding: "0.5rem" }}>
           {songs.map((song: any, i: number) => {
-            const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#7F77DD,#1D9E75)";
+            const grad      = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#C9A227,#7F77DD)";
+            const diffColor = DIFF_COLORS[song.difficulty ?? ""] ?? "var(--text-3)";
             return (
               <div key={song.id}>
                 <Link href={`/chants/${song.id}`} className="song-row">
-                  <div className="cover-art flex-shrink-0 font-black"
+                  <div className="cover-art flex-shrink-0 font-black text-white/80"
                     style={{ background: grad, width: 48, height: 48, fontSize: "0.65rem" }}>
                     {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-white truncate">{song.title}</p>
                     <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>
-                      {[song.composer, song.key_signature].filter(Boolean).join(" · ") || song.liturgical_type || "—"}
+                      {[song.composer, song.key_signature, song.tempo_bpm ? `${song.tempo_bpm} BPM` : null]
+                        .filter(Boolean).join(" · ") || song.liturgical_type || "—"}
                     </p>
-                    {song.languages?.length > 0 && (
-                      <div className="flex gap-1 mt-1">
-                        {song.languages.map((lang: string) => (
-                          <span key={lang}
-                            className="text-xs px-1.5 py-0.5 rounded font-bold uppercase"
-                            style={{ background: "var(--surface-3)", color: "var(--text-2)", fontSize: "0.6rem" }}>
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      {song.languages?.map((lang: string) => (
+                        <span key={lang} className="text-xs px-1.5 py-0.5 rounded font-bold uppercase"
+                          style={{ background: "var(--surface-3)", color: "var(--text-2)", fontSize: "0.6rem" }}>
+                          {lang}
+                        </span>
+                      ))}
+                      {song.difficulty && (
+                        <span className="text-xs font-bold" style={{ color: diffColor, fontSize: "0.6rem" }}>
+                          ● {song.difficulty}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <span className={`badge flex-shrink-0 ${STATUS_BG[song.status ?? ""] ?? "bg-gray-900 text-gray-400 border border-gray-700"}`}>
                     {song.status?.replace("_", " ")}

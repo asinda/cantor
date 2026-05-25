@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS choirs (
   name        TEXT NOT NULL,
   description TEXT,
   owner_id    UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  invite_code TEXT UNIQUE DEFAULT lower(substr(md5(random()::text), 1, 8)),
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -188,6 +189,51 @@ ALTER TABLE mass_sheets       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mass_sheet_songs  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE choir_song_versions ENABLE ROW LEVEL SECURITY;
 
+-- ── Policies : choirs ──────────────────────────────────────────
+-- Tout utilisateur connecté peut lire les chorales (pour rejoindre via invite_code)
+CREATE POLICY "choirs_select" ON choirs
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+-- Tout utilisateur connecté peut créer une chorale
+CREATE POLICY "choirs_insert" ON choirs
+  FOR INSERT WITH CHECK (auth.uid() = owner_id);
+
+-- Seul le chef peut modifier sa chorale
+CREATE POLICY "choirs_update" ON choirs
+  FOR UPDATE USING (auth.uid() = owner_id);
+
+CREATE POLICY "choirs_delete" ON choirs
+  FOR DELETE USING (auth.uid() = owner_id);
+
+-- ── Policies : choir_members ────────────────────────────────────
+-- Un membre voit tous les membres de ses chorales
+CREATE POLICY "choir_members_select" ON choir_members
+  FOR SELECT USING (
+    choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+  );
+
+-- Un utilisateur peut s'ajouter lui-même
+CREATE POLICY "choir_members_insert" ON choir_members
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Le chef peut modifier les rôles
+CREATE POLICY "choir_members_update" ON choir_members
+  FOR UPDATE USING (
+    choir_id IN (
+      SELECT choir_id FROM choir_members WHERE user_id = auth.uid() AND role = 'chef'
+    )
+  );
+
+-- Le chef peut retirer un membre (ou le membre se retire lui-même)
+CREATE POLICY "choir_members_delete" ON choir_members
+  FOR DELETE USING (
+    auth.uid() = user_id OR
+    choir_id IN (
+      SELECT choir_id FROM choir_members WHERE user_id = auth.uid() AND role = 'chef'
+    )
+  );
+
+-- ── Policies : songs ───────────────────────────────────────────
 -- Politique : membres d'une chorale voient les données de leur chorale
 CREATE POLICY "choir_members_select" ON songs
   FOR SELECT USING (
@@ -216,6 +262,64 @@ CREATE POLICY "choir_members_delete" ON songs
     choir_id IN (
       SELECT choir_id FROM choir_members WHERE user_id = auth.uid() AND role IN ('chef','chantre')
     )
+  );
+
+-- ── Policies : tables liées aux chants ────────────────────────
+CREATE POLICY "song_lyrics_all" ON song_lyrics
+  FOR ALL USING (
+    song_id IN (
+      SELECT s.id FROM songs s
+      WHERE s.choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "youtube_links_all" ON youtube_links
+  FOR ALL USING (
+    song_id IN (
+      SELECT s.id FROM songs s
+      WHERE s.choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "voice_guides_all" ON voice_guides
+  FOR ALL USING (
+    song_id IN (
+      SELECT s.id FROM songs s
+      WHERE s.choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+    )
+  );
+
+-- ── Policies : répétitions ─────────────────────────────────────
+CREATE POLICY "rehearsals_all" ON rehearsals
+  FOR ALL USING (
+    choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+  );
+
+CREATE POLICY "rehearsal_songs_all" ON rehearsal_songs
+  FOR ALL USING (
+    rehearsal_id IN (
+      SELECT r.id FROM rehearsals r
+      WHERE r.choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+    )
+  );
+
+-- ── Policies : feuilles de messe ───────────────────────────────
+CREATE POLICY "mass_sheets_all" ON mass_sheets
+  FOR ALL USING (
+    choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+  );
+
+CREATE POLICY "mass_sheet_songs_all" ON mass_sheet_songs
+  FOR ALL USING (
+    mass_sheet_id IN (
+      SELECT ms.id FROM mass_sheets ms
+      WHERE ms.choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "choir_song_versions_all" ON choir_song_versions
+  FOR ALL USING (
+    choir_id IN (SELECT choir_id FROM choir_members WHERE user_id = auth.uid())
   );
 
 -- Fonction mise à jour updated_at

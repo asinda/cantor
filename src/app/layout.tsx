@@ -8,10 +8,23 @@ export const metadata: Metadata = {
   title: "Cantor — Chorale liturgique",
   description: "Plateforme de gestion de chants pour chorales liturgiques multilingues",
   manifest: "/manifest.json",
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Cantor" },
+  keywords: ["chorale", "liturgie", "chants", "répétition", "messe", "musique sacrée"],
+  icons: {
+    icon:    [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico" },
+    ],
+    apple:   { url: "/favicon.svg", type: "image/svg+xml" },
+    shortcut: "/favicon.svg",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#7F77DD",
+  themeColor: "#C9A227",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

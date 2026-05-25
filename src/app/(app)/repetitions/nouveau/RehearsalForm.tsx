@@ -6,13 +6,14 @@ import { LITURGICAL_GRADIENTS } from "@/types";
 import { Plus, X } from "lucide-react";
 
 type SongRow = { id: string; title: string; liturgical_type: string | null; status: string | null };
-type Props   = { choirId: string; songs: SongRow[] };
+type Initial = { id: string; date: string; notes?: string | null; initialPicked?: string[] };
+type Props   = { choirId: string; songs: SongRow[]; initial?: Initial };
 
-export default function RehearsalForm({ choirId, songs }: Props) {
+export default function RehearsalForm({ choirId, songs, initial }: Props) {
   const router    = useRouter();
-  const [date,    setDate]    = useState("");
-  const [notes,   setNotes]   = useState("");
-  const [picked,  setPicked]  = useState<string[]>([]);
+  const [date,    setDate]    = useState(initial?.date?.slice(0, 16) ?? "");
+  const [notes,   setNotes]   = useState(initial?.notes ?? "");
+  const [picked,  setPicked]  = useState<string[]>(initial?.initialPicked ?? []);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState("");
 
@@ -28,21 +29,27 @@ export default function RehearsalForm({ choirId, songs }: Props) {
     setLoading(true); setError("");
 
     const supabase = createClient();
-    const { data: rehearsal, error: err } = await supabase
-      .from("rehearsals")
-      .insert({ choir_id: choirId, date, notes: notes || null })
-      .select("id")
-      .single();
+    let rehearsalId: string;
 
-    if (err || !rehearsal) { setError(err?.message ?? "Erreur"); setLoading(false); return; }
+    if (initial?.id) {
+      const { error: err } = await supabase.from("rehearsals").update({ date, notes: notes || null }).eq("id", initial.id);
+      if (err) { setError(err.message); setLoading(false); return; }
+      await supabase.from("rehearsal_songs").delete().eq("rehearsal_id", initial.id);
+      rehearsalId = initial.id;
+    } else {
+      const { data: rehearsal, error: err } = await supabase
+        .from("rehearsals").insert({ choir_id: choirId, date, notes: notes || null }).select("id").single();
+      if (err || !rehearsal) { setError(err?.message ?? "Erreur"); setLoading(false); return; }
+      rehearsalId = rehearsal.id;
+    }
 
     if (picked.length > 0) {
       await supabase.from("rehearsal_songs").insert(
-        picked.map((song_id, i) => ({ rehearsal_id: rehearsal.id, song_id, order_index: i + 1 }))
+        picked.map((song_id, i) => ({ rehearsal_id: rehearsalId, song_id, order_index: i + 1 }))
       );
     }
 
-    router.push(`/repetitions/${rehearsal.id}`);
+    router.push(`/repetitions/${rehearsalId}`);
   }
 
   const pickedSet = new Set(picked);
@@ -129,7 +136,7 @@ export default function RehearsalForm({ choirId, songs }: Props) {
           Annuler
         </button>
         <button type="submit" disabled={loading} className="btn btn-primary flex-1 justify-center">
-          {loading ? "Enregistrement…" : "Planifier"}
+          {loading ? "Enregistrement…" : initial?.id ? "Enregistrer" : "Planifier"}
         </button>
       </div>
     </form>

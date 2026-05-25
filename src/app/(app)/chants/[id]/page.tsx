@@ -4,6 +4,9 @@ import Link from "next/link";
 import { ArrowLeft, Edit2, Music, ExternalLink, Mic2, FileText } from "lucide-react";
 import { LITURGICAL_GRADIENTS, STATUS_BG, LANGUAGE_LABELS } from "@/types";
 import DeleteSongButton from "./DeleteSongButton";
+import VoiceTools from "@/components/player/VoiceTools";
+import AIPanel from "@/components/player/AIPanel";
+import YoutubeLinks from "./YoutubeLinks";
 
 export default async function SongDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -68,10 +71,10 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
               <p className="text-sm font-semibold text-white">{song.liturgical_type}</p>
             </div>
           )}
-          {song.bpm && (
+          {song.tempo_bpm && (
             <div>
               <p className="text-xs font-bold uppercase tracking-wider mb-0.5" style={{ color: "var(--text-3)" }}>BPM</p>
-              <p className="text-sm font-semibold text-white">{song.bpm}</p>
+              <p className="text-sm font-semibold text-white">{song.tempo_bpm}</p>
             </div>
           )}
           {song.languages?.length > 0 && (
@@ -91,6 +94,22 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
+      {/* Voice Tools + AI Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <VoiceTools
+          track={{ id: song.id, title: song.title, liturgical_type: song.liturgical_type, composer: song.composer }}
+          voiceGuides={voices ?? []}
+          youtubeLinks={youtube ?? []}
+        />
+        <AIPanel
+          bpm={song.tempo_bpm}
+          keySignature={song.key_signature}
+          difficulty={song.difficulty}
+          liturgicalType={song.liturgical_type}
+          languages={song.languages}
+        />
+      </div>
+
       {/* Notes */}
       {song.notes && (
         <div className="card space-y-2">
@@ -104,28 +123,36 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Lyrics per language */}
+      {/* Paroles */}
       {lyrics && lyrics.length > 0 && (
-        <div className="card space-y-4">
+        <div className="card space-y-5">
           <div className="flex items-center gap-2">
             <FileText className="w-4 h-4" style={{ color: "#1D9E75" }} />
             <h2 className="font-bold text-sm text-white">Paroles</h2>
           </div>
           {lyrics.map((lyric: any) => (
-            <div key={lyric.language}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs px-2 py-0.5 rounded font-bold uppercase"
-                  style={{ background: "var(--vert-dim)", color: "#1D9E75" }}>
+            <div key={lyric.language} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2.5 py-1 rounded-lg font-bold uppercase"
+                  style={{ background: "rgba(29,158,117,0.15)", color: "#1D9E75" }}>
                   {LANGUAGE_LABELS[lyric.language as keyof typeof LANGUAGE_LABELS] ?? lyric.language}
                 </span>
-                {lyric.pronunciation_guide && (
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>Guide de prononciation disponible</span>
-                )}
               </div>
               <pre className="text-sm leading-relaxed whitespace-pre-wrap font-sans"
-                style={{ color: "var(--text-2)" }}>
-                {lyric.lyrics_text}
+                style={{ color: "var(--text-2)", fontFamily: "inherit" }}>
+                {lyric.lyrics}
               </pre>
+              {lyric.phonetic && (
+                <div className="px-3 py-2 rounded-xl"
+                  style={{ background: "var(--surface-3)", borderLeft: "2px solid #1D9E75" }}>
+                  <p className="text-xs font-bold uppercase mb-1" style={{ color: "#1D9E75" }}>
+                    Prononciation
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
+                    {lyric.phonetic}
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -182,27 +209,10 @@ export default async function SongDetailPage({ params }: { params: Promise<{ id:
             <ExternalLink className="w-4 h-4" style={{ color: "#FF4444" }} />
             <h2 className="font-bold text-sm text-white">Liens YouTube</h2>
           </div>
-          <div className="space-y-2">
-            {youtube.map((yt: any) => (
-              <a key={yt.id} href={yt.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-xl transition-colors"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(255,68,68,0.15)" }}>
-                  <ExternalLink className="w-4 h-4" style={{ color: "#FF4444" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {yt.title || yt.url}
-                  </p>
-                  <p className="text-xs capitalize" style={{ color: "var(--text-2)" }}>
-                    {yt.version_type?.replace("_", " ")}
-                  </p>
-                </div>
-                <Music className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
-              </a>
-            ))}
-          </div>
+          <YoutubeLinks
+            links={youtube}
+            track={{ id: song.id, title: song.title, liturgical_type: song.liturgical_type, composer: song.composer }}
+          />
         </div>
       )}
 
