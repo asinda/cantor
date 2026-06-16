@@ -348,12 +348,12 @@ async function main() {
     const { data, error } = await sb.from("songs").insert({
       choir_id:        choirId,
       title:           song.title,
-      composer:        song.composer ?? null,
       liturgical_type: song.liturgical_type,
       languages:       song.languages,
       status:          song.status,
       difficulty:      song.difficulty,
-      notes:           song.notes ?? null,
+      ...(song.composer ? { composer: song.composer } : {}),
+      ...(song.notes    ? { notes:    song.notes    } : {}),
     }).select("id").single();
 
     if (error) {
@@ -372,22 +372,31 @@ async function main() {
     // Vérifier doublon
     const { data: existSheet } = await sb
       .from("mass_sheets").select("id").eq("choir_id", choirId).eq("title", sheet.title).limit(1);
+
+    let sheetId;
     if (existSheet?.length) {
-      console.log(`  ⏭  Feuille "${sheet.title}" (déjà existante)`);
-      continue;
-    }
-
-    const { data: created_sheet, error: sheetErr } = await sb.from("mass_sheets").insert({
-      choir_id:         choirId,
-      title:            sheet.title,
-      date:             sheet.date,
-      liturgical_season: sheet.liturgical_season,
-      notes:            sheet.notes,
-    }).select("id").single();
-
-    if (sheetErr || !created_sheet) {
-      console.error(`  ❌ Feuille "${sheet.title}" — ${sheetErr?.message}`);
-      continue;
+      sheetId = existSheet[0].id;
+      // Vérifier si les chants sont déjà associés
+      const { data: existLinks } = await sb
+        .from("mass_sheet_songs").select("id").eq("mass_sheet_id", sheetId).limit(1);
+      if (existLinks?.length) {
+        console.log(`  ⏭  Feuille "${sheet.title}" (déjà complète)`);
+        continue;
+      }
+      console.log(`  🔗  Feuille "${sheet.title}" (existe, ajout des chants…)`);
+    } else {
+      const { data: created_sheet, error: sheetErr } = await sb.from("mass_sheets").insert({
+        choir_id:          choirId,
+        title:             sheet.title,
+        date:              sheet.date,
+        liturgical_season: sheet.liturgical_season,
+        notes:             sheet.notes,
+      }).select("id").single();
+      if (sheetErr || !created_sheet) {
+        console.error(`  ❌ Feuille "${sheet.title}" — ${sheetErr?.message}`);
+        continue;
+      }
+      sheetId = created_sheet.id;
     }
 
     // Associer les chants
@@ -395,7 +404,7 @@ async function main() {
       .map((title, i) => {
         const song_id = songMap[title];
         if (!song_id) console.warn(`    ⚠️  Chant non trouvé : "${title}"`);
-        return song_id ? { mass_sheet_id: created_sheet.id, song_id, position: i + 1 } : null;
+        return song_id ? { mass_sheet_id: sheetId, song_id, position: i + 1 } : null;
       })
       .filter(Boolean);
 

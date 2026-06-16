@@ -1,98 +1,107 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Home, Music, BookOpen, Calendar, LogOut, Sparkles, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Home, Music, BookOpen, Calendar, Settings, LogOut, PanelLeftClose, PanelLeftOpen, CheckCircle } from "lucide-react";
 import CantorIcon from "@/components/CantorIcon";
-import { createClient } from "@/lib/supabase/client";
+import { signOutAction } from "@/actions/auth";
+import { useState } from "react";
 
 const NAV = [
-  { href: "/",           label: "Tableau de bord",  icon: Home },
-  { href: "/chants",     label: "Bibliotheque",     icon: Music },
-  { href: "/messe",      label: "Feuille de messe", icon: BookOpen },
-  { href: "/repetitions",label: "Repetitions",      icon: Calendar },
-  { href: "/parametres", label: "Parametres",       icon: Settings },
+  { href: "/dashboard",   label: "Accueil",           icon: Home,     color: "#A0621A" },
+  { href: "/chants",      label: "Bibliothèque",      icon: Music,    color: "#6B3800" },
+  { href: "/chants/validation", label: "Validation",   icon: CheckCircle, color: "#4A7C59" },
+  { href: "/messe",       label: "Feuilles de messe", icon: BookOpen, color: "#4A7C59" },
+  { href: "/repetitions", label: "Répétitions",       icon: Calendar, color: "#A0621A" },
+  { href: "/parametres",  label: "Paramètres",        icon: Settings, color: "#9A7D5A" },
 ];
 
-const NAV_LABELS: Record<string, string> = {
-  "/":            "Tableau de bord",
-  "/chants":      "Bibliothèque",
-  "/messe":       "Feuille de messe",
-  "/repetitions": "Répétitions",
-  "/parametres":  "Paramètres",
-};
-
 export default function Sidebar({ userName }: { userName?: string }) {
-  const path   = usePathname();
-  const router = useRouter();
-
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
+  const path = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col h-screen sticky top-0"
-      style={{ background: "var(--bg-2)", borderRight: "1px solid var(--border)" }}>
-
-      {/* Logo */}
-      <div className="px-5 pt-7 pb-6">
-        <Link href="/" className="inline-block">
-          <CantorIcon size={38} showText />
-        </Link>
-        <p className="text-xs mt-1.5 ml-0.5" style={{ color: "var(--text-3)" }}>
-          Chorale liturgique
-        </p>
+    <aside
+      suppressHydrationWarning
+      style={{
+        width: collapsed ? 60 : 240,
+        transition: "width 0.2s ease",
+        background: "var(--surface)",
+        borderRight: "1px solid var(--border)",
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        overflow: "hidden",
+      }}
+    >
+      {/* Logo + toggle */}
+      <div className="flex items-center justify-between px-4 pt-5 pb-6"
+        style={{ minHeight: 64 }}>
+        {!collapsed && (
+          <Link href="/dashboard" className="inline-block">
+            <CantorIcon size={28} showText />
+          </Link>
+        )}
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/6 flex-shrink-0"
+          style={{ color: "var(--text-3)" }}
+          title={collapsed ? "Déplier" : "Réduire"}
+        >
+          {collapsed
+            ? <PanelLeftOpen className="w-4 h-4" />
+            : <PanelLeftClose className="w-4 h-4" />
+          }
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-2 space-y-0.5">
-        {NAV.map(({ href, icon: Icon }) => {
-          const active = href === "/" ? path === "/" : path.startsWith(href);
-          const label  = NAV_LABELS[href] ?? href;
+      <nav className="flex-1 px-2 space-y-0.5">
+        {NAV.map(({ href, label, icon: Icon, color }) => {
+          const active = href === "/dashboard" ? path === "/dashboard" : path.startsWith(href);
           return (
             <Link key={href} href={href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              title={collapsed ? label : undefined}
+              className="flex items-center gap-3 rounded-lg text-sm transition-all"
               style={{
-                background: active ? "var(--gold-dim)" : "transparent",
-                color:      active ? "var(--gold)"     : "var(--text-2)",
+                padding: collapsed ? "0.625rem" : "0.625rem 0.75rem",
+                justifyContent: collapsed ? "center" : "flex-start",
+                background: active ? `${color}10` : "transparent",
+                color: active ? color : "var(--text-2)",
+                fontWeight: active ? 600 : 400,
+                borderLeft: active && !collapsed ? `3px solid ${color}` : "3px solid transparent",
               }}>
-              <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={active ? 2.5 : 1.75} />
-              {label}
+              <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={active ? 2.5 : 1.75}
+                style={{ color: active ? color : "var(--text-3)" }} />
+              {!collapsed && label}
             </Link>
           );
         })}
       </nav>
 
-      {/* AI shortcut */}
-      <div className="px-3 pb-3">
-        <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
-          style={{ background: "rgba(127,119,221,0.1)", border: "1px solid rgba(127,119,221,0.2)" }}>
-          <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: "var(--violet)" }} />
-          <span className="text-xs font-semibold" style={{ color: "var(--violet)" }}>Assistant IA</span>
-          <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full font-bold"
-            style={{ background: "var(--violet-dim)", color: "var(--violet)" }}>
-            Beta
-          </span>
-        </div>
-      </div>
+      {/* Séparateur */}
+      <div className="mx-3 my-2" style={{ height: 1, background: "var(--border)" }} />
 
       {/* User */}
-      <div className="px-4 py-4" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, var(--gold), #7F77DD)", color: "#0B1B2B" }}>
-              {(userName ?? "C").slice(0, 1).toUpperCase()}
-            </div>
-            <p className="text-sm font-semibold text-white truncate">{userName ?? "Chef de choeur"}</p>
-          </div>
-          <button onClick={handleSignOut}
-            className="p-1.5 rounded-xl transition-colors flex-shrink-0"
-            style={{ color: "var(--text-3)" }} title="Deconnexion">
-            <LogOut className="w-4 h-4" />
-          </button>
+      <div className="mx-2 mb-4 px-2 py-2.5 rounded-lg flex items-center gap-2.5"
+        style={{ justifyContent: collapsed ? "center" : "flex-start" }}>
+        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+          style={{ background: "var(--gold)", color: "white" }}>
+          {(userName ?? "C").slice(0, 1).toUpperCase()}
         </div>
+        {!collapsed && (
+          <>
+            <p className="text-sm flex-1 truncate" style={{ color: "var(--text-2)" }}>
+              {userName ?? "Chef de chœur"}
+            </p>
+            <button onClick={() => signOutAction()}
+              className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-black/6 transition-colors"
+              style={{ color: "var(--text-3)" }}>
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </>
+        )}
       </div>
     </aside>
   );

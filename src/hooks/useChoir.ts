@@ -15,6 +15,8 @@ export type Choir = {
   description: string | null;
   invite_code: string | null;
   owner_id: string;
+  logo_url: string | null;
+  city: string | null;
   created_at: string;
 };
 

@@ -29,6 +29,16 @@ export type VoicePart = (typeof VOICE_PARTS)[number];
 export const SONG_STATUSES = ["nouveau", "en_cours", "appris"] as const;
 export type SongStatus = (typeof SONG_STATUSES)[number];
 
+export const VALIDATION_STATUSES = ["brouillon", "en_attente", "validé", "rejeté"] as const;
+export type ValidationStatus = (typeof VALIDATION_STATUSES)[number];
+
+export const VALIDATION_STYLE: Record<ValidationStatus, { label: string; color: string; bg: string }> = {
+  brouillon:   { label: "Brouillon",    color: "#9A7D5A", bg: "rgba(154,125,90,0.1)"  },
+  en_attente:  { label: "En attente",   color: "#A0621A", bg: "rgba(160,98,26,0.12)"  },
+  "validé":    { label: "Validé",       color: "#4A7C59", bg: "rgba(74,124,89,0.12)"  },
+  rejeté:      { label: "Rejeté",       color: "#9B1C1C", bg: "rgba(155,28,28,0.1)"   },
+};
+
 export const VERSION_TYPES = [
   "choral", "karaoke", "satb", "soprano", "alto", "ténor", "basse", "instrumental",
 ] as const;
@@ -43,11 +53,11 @@ export const MUSICAL_KEYS = [
 
 export const LITURGICAL_GRADIENTS: Record<string, string> = {
   "entrée":     "linear-gradient(135deg, #7c3aed 0%, #db2777 100%)",
-  "kyrie":      "linear-gradient(135deg, #374151 0%, #4b5563 100%)",
+  "kyrie":      "linear-gradient(135deg, #374151 0%, #6B7280 100%)",
   "gloria":     "linear-gradient(135deg, #d97706 0%, #ea580c 100%)",
   "psaume":     "linear-gradient(135deg, #059669 0%, #0d9488 100%)",
-  "alléluia":   "linear-gradient(135deg, #ca8a04 0%, #d97706 100%)",
-  "offertoire": "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
+  "alléluia":   "linear-gradient(135deg, #b45309 0%, #d97706 100%)",
+  "offertoire": "linear-gradient(135deg, #0284c7 0%, #0891b2 100%)",
   "sanctus":    "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)",
   "agnus dei":  "linear-gradient(135deg, #dc2626 0%, #be185d 100%)",
   "notre père": "linear-gradient(135deg, #0f766e 0%, #0d9488 100%)",
@@ -74,9 +84,9 @@ export const STATUS_COLORS: Record<string, string> = {
 };
 
 export const STATUS_BG: Record<string, string> = {
-  "nouveau":  "bg-gray-900 text-gray-400 border border-gray-700",
-  "en_cours": "bg-orange-950 text-orange-400 border border-orange-800",
-  "appris":   "bg-green-950 text-green-400 border border-green-800",
+  "nouveau":  "text-stone-500",
+  "en_cours": "text-amber-700",
+  "appris":   "text-emerald-700",
 };
 
 // ── Database row types ─────────────────────────────────────────
@@ -87,7 +97,20 @@ export type Choir = {
   description: string | null;
   owner_id: string;
   invite_code: string | null;
+  logo_url: string | null;
+  city: string | null;
   created_at: string;
+};
+
+export type Subscription = {
+  id: string;
+  choir_id: string;
+  stripe_id: string | null;
+  plan: "free" | "essential" | "pro";
+  status: "active" | "past_due" | "canceled" | "trialing";
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Song = {
@@ -160,6 +183,8 @@ export type Rehearsal = {
   id: string;
   choir_id: string;
   date: string;
+  time: string | null;
+  location: string | null;
   notes: string | null;
   created_at: string;
 };

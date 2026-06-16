@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createMasseAction, updateMasseAction } from "@/actions/messe";
 import { LITURGICAL_SEASONS, LITURGICAL_GRADIENTS, LITURGICAL_TYPE_VALUES } from "@/types";
 import { Plus, X, GripVertical } from "lucide-react";
 
@@ -39,32 +39,26 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
     if (!title.trim()) { setError("Le titre est requis."); return; }
     setLoading(true); setError("");
 
-    const supabase = createClient();
-    let sheetId: string;
+    const payload = {
+      choir_id:          choirId,
+      title:             title.trim(),
+      date:              date || null,
+      liturgical_season: season || null,
+      notes:             notes || null,
+      songs:             order,
+    };
 
-    if (initial?.id) {
-      const { error: err } = await supabase.from("mass_sheets").update({
-        title: title.trim(), date: date || null, liturgical_season: season || null, notes: notes || null,
-      }).eq("id", initial.id);
-      if (err) { setError(err.message); setLoading(false); return; }
-      await supabase.from("mass_sheet_songs").delete().eq("mass_sheet_id", initial.id);
-      sheetId = initial.id;
-    } else {
-      const { data: sheet, error: err } = await supabase
-        .from("mass_sheets")
-        .insert({ choir_id: choirId, title: title.trim(), date: date || null, liturgical_season: season || null, notes: notes || null })
-        .select("id").single();
-      if (err || !sheet) { setError(err?.message ?? "Erreur"); setLoading(false); return; }
-      sheetId = sheet.id;
+    const result = initial?.id
+      ? await updateMasseAction(initial.id, payload)
+      : await createMasseAction(payload);
+
+    if ("error" in result) {
+      setError(result.error);
+      setLoading(false);
+      return;
     }
 
-    if (order.length > 0) {
-      await supabase.from("mass_sheet_songs").insert(
-        order.map((e) => ({ mass_sheet_id: sheetId, song_id: e.song_id, position: e.position }))
-      );
-    }
-
-    router.push(`/messe/${sheetId}`);
+    router.push(`/messe/${result.id}`);
   }
 
   const selectedIds = new Set(order.map((e) => e.song_id));
@@ -74,7 +68,7 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
 
       {/* Info */}
       <div className="card space-y-4">
-        <h2 className="font-bold text-sm text-white">Informations</h2>
+        <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Informations</h2>
         <div>
           <label>Titre *</label>
           <input value={title} onChange={(e) => setTitle(e.target.value)}
@@ -104,7 +98,7 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
 
       {/* Programme */}
       <div className="card space-y-3">
-        <h2 className="font-bold text-sm text-white">Programme ({order.length} chants)</h2>
+        <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Programme ({order.length} chants)</h2>
 
         {/* Selected order */}
         {order.length > 0 && (
@@ -112,7 +106,7 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
             {order.map((entry, idx) => {
               const song = songs.find((s) => s.id === entry.song_id);
               if (!song) return null;
-              const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#7F77DD,#1D9E75)";
+              const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#8B5CF6,#22C55E)";
               return (
                 <div key={entry.song_id}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
@@ -125,7 +119,7 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
                   <div className="w-7 h-7 rounded-lg flex-shrink-0"
                     style={{ background: grad }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{song.title}</p>
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--text-1)" }}>{song.title}</p>
                     <p className="text-xs" style={{ color: "var(--text-2)" }}>
                       {[song.liturgical_type, song.key_signature].filter(Boolean).join(" · ") || "—"}
                     </p>
@@ -159,10 +153,10 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
                     className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left transition-colors disabled:opacity-40"
                     style={{ background: "var(--surface-2)" }}>
                     <div className="w-7 h-7 rounded-lg flex-shrink-0"
-                      style={{ background: GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#7F77DD,#1D9E75)" }} />
+                      style={{ background: GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#8B5CF6,#22C55E)" }} />
                     <span className="text-sm text-white flex-1 truncate">{song.title}</span>
                     {!selectedIds.has(song.id) && (
-                      <Plus className="w-4 h-4 flex-shrink-0" style={{ color: "#7F77DD" }} />
+                      <Plus className="w-4 h-4 flex-shrink-0" style={{ color: "var(--violet)" }} />
                     )}
                   </button>
                 ))}
@@ -174,7 +168,7 @@ export default function MasseForm({ choirId, songs, initial }: Props) {
         {songs.length === 0 && (
           <p className="text-sm text-center py-4" style={{ color: "var(--text-2)" }}>
             Aucun chant dans le répertoire.{" "}
-            <a href="/chants/nouveau" className="font-semibold" style={{ color: "#7F77DD" }}>
+            <a href="/chants/nouveau" className="font-semibold" style={{ color: "var(--violet)" }}>
               Ajouter un chant
             </a>
           </p>

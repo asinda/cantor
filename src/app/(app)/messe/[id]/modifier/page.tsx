@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthContext } from "@/lib/auth";
+import { getMassSheet, getMassSheetSongs } from "@/services/messe";
+import { listSongsForProgramme } from "@/services/songs";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -6,33 +8,25 @@ import MasseForm from "../../nouveau/MasseForm";
 
 export default async function EditMasseSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { choirId } = await getAuthContext();
 
-  const [{ data: sheet }, { data: membership }, { data: sheetSongs }] = await Promise.all([
-    supabase.from("mass_sheets").select("*").eq("id", id).single(),
-    supabase.from("choir_members").select("choir_id").eq("user_id", user!.id).limit(1).single(),
-    supabase.from("mass_sheet_songs").select("song_id,position").eq("mass_sheet_id", id).order("position"),
+  const [{ data: sheet }, { data: sheetSongs }] = await Promise.all([
+    getMassSheet(id),
+    getMassSheetSongs(id),
   ]);
 
   if (!sheet) notFound();
 
-  const choirId = (membership as any)?.choir_id ?? sheet.choir_id;
-
-  const { data: songs } = await supabase
-    .from("songs")
-    .select("id,title,liturgical_type,key_signature")
-    .eq("choir_id", choirId)
-    .order("liturgical_type")
-    .order("title");
+  const resolvedChoirId = choirId ?? sheet.choir_id;
+  const { data: songs } = await listSongsForProgramme(resolvedChoirId);
 
   const initial = {
-    id: sheet.id,
-    title: sheet.title,
-    date: sheet.date,
+    id:                sheet.id,
+    title:             sheet.title,
+    date:              sheet.date,
     liturgical_season: sheet.liturgical_season,
-    notes: sheet.notes,
-    initialOrder: (sheetSongs ?? []).map((s: any) => ({ song_id: s.song_id, position: s.position })),
+    notes:             sheet.notes,
+    initialOrder:      (sheetSongs ?? []).map((s: any) => ({ song_id: s.song_id, position: s.position })),
   };
 
   return (
@@ -42,10 +36,10 @@ export default async function EditMasseSheetPage({ params }: { params: Promise<{
         <ArrowLeft className="w-4 h-4" /> Retour
       </Link>
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Modifier</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-1)" }}>Modifier</h1>
         <p className="text-sm mt-0.5 truncate" style={{ color: "var(--text-2)" }}>{sheet.title}</p>
       </div>
-      <MasseForm choirId={choirId} songs={songs ?? []} initial={initial} />
+      <MasseForm choirId={resolvedChoirId} songs={songs ?? []} initial={initial} />
     </div>
   );
 }

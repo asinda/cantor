@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { updateSongStatusAction } from "@/actions/songs";
 
 const CYCLE: Record<string, string> = {
   nouveau:  "en_cours",
@@ -21,8 +21,7 @@ export default function MasteryButton({ songId, initialStatus }: { songId: strin
   async function handleClick() {
     const next = CYCLE[status] ?? "en_cours";
     setSaving(true);
-    const supabase = createClient();
-    await supabase.from("songs").update({ status: next }).eq("id", songId);
+    await updateSongStatusAction(songId, next);
     setStatus(next);
     setSaving(false);
   }

@@ -1,13 +1,14 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useChoir } from "@/hooks/useChoir";
-import { Settings, Copy, RefreshCw, Users, Shield, Music2, Check, Edit2 } from "lucide-react";
+import { Settings, Copy, RefreshCw, Users, Shield, Music2, Check, Edit2, MapPin, Globe } from "lucide-react";
 import CantorIcon from "@/components/CantorIcon";
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  chef:     { label: "Chef de chœur", color: "#C9A227" },
-  chantre:  { label: "Chantre",       color: "#7F77DD" },
-  choriste: { label: "Choriste",      color: "#1D9E75" },
+  chef:     { label: "Chef de chœur", color: "#F0B429" },
+  chantre:  { label: "Chantre",       color: "#8B5CF6" },
+  choriste: { label: "Choriste",      color: "#22C55E" },
 };
 
 const VOICE_COLORS: Record<string, string> = {
@@ -20,6 +21,8 @@ export default function ParametresPage() {
   const [regen,     setRegen]     = useState(false);
   const [editName,  setEditName]  = useState(false);
   const [name,      setName]      = useState("");
+  const [city,      setCity]      = useState("");
+  const [logoUrl,   setLogoUrl]   = useState("");
   const [saving,    setSaving]    = useState(false);
   const [saveMsg,   setSaveMsg]   = useState("");
 
@@ -84,12 +87,12 @@ export default function ParametresPage() {
           <Settings className="w-5 h-5" style={{ color: "var(--gold)" }} />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Paramètres</h1>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-1)" }}>Paramètres</h1>
           <p className="text-sm" style={{ color: "var(--text-2)" }}>Gestion de la chorale</p>
         </div>
         {saveMsg && (
           <span className="ml-auto text-xs font-bold px-3 py-1.5 rounded-full"
-            style={{ background: "rgba(29,158,117,0.2)", color: "#1D9E75" }}>
+            style={{ background: "rgba(34,197,94,0.15)", color: "#22C55E" }}>
             ✓ {saveMsg}
           </span>
         )}
@@ -99,7 +102,7 @@ export default function ParametresPage() {
       <div className="card space-y-4">
         <div className="flex items-center gap-2 mb-2">
           <Music2 className="w-4 h-4" style={{ color: "var(--gold)" }} />
-          <h2 className="font-bold text-sm text-white">Informations de la chorale</h2>
+          <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Informations de la chorale</h2>
         </div>
 
         {/* Name */}
@@ -117,13 +120,78 @@ export default function ParametresPage() {
           ) : (
             <div className="flex items-center justify-between mt-1 px-3 py-2.5 rounded-xl"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-              <span className="text-sm font-semibold text-white">{choir.name}</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--text-1)" }}>{choir.name}</span>
               {isChef && (
                 <button onClick={() => { setName(choir.name); setEditName(true); }}
                   style={{ color: "var(--text-3)" }}>
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Ville */}
+        <div>
+          <label>Ville</label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: "var(--text-3)" }} />
+            <input
+              value={city || choir.city || ""}
+              onChange={e => setCity(e.target.value)}
+              onBlur={async () => {
+                if (city && city !== choir.city) {
+                  await fetch("/api/choir", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ city }),
+                  });
+                  setSaveMsg("Ville enregistrée !");
+                  setTimeout(() => setSaveMsg(""), 2000);
+                  refetch();
+                }
+              }}
+              placeholder="Paris, Lyon, Bruxelles…"
+              disabled={!isChef}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        {/* URL Logo */}
+        <div>
+          <label>Logo (URL image)</label>
+          <div className="relative">
+            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+              style={{ color: "var(--text-3)" }} />
+            <input
+              value={logoUrl || choir.logo_url || ""}
+              onChange={e => setLogoUrl(e.target.value)}
+              onBlur={async () => {
+                if (logoUrl && logoUrl !== choir.logo_url) {
+                  await fetch("/api/choir", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ logo_url: logoUrl }),
+                  });
+                  setSaveMsg("Logo enregistré !");
+                  setTimeout(() => setSaveMsg(""), 2000);
+                  refetch();
+                }
+              }}
+              placeholder="https://…/logo.png"
+              disabled={!isChef}
+              className="pl-9"
+            />
+          </div>
+          {(logoUrl || choir.logo_url) && (
+            <div className="mt-2 flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={logoUrl || choir.logo_url || ""} alt="Logo"
+                className="w-12 h-12 rounded-lg object-contain"
+                style={{ border: "1px solid var(--border)" }} />
+              <p className="text-xs" style={{ color: "var(--text-2)" }}>Aperçu du logo</p>
             </div>
           )}
         </div>
@@ -143,7 +211,7 @@ export default function ParametresPage() {
       <div className="card-gold space-y-3">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4" style={{ color: "var(--gold)" }} />
-          <h2 className="font-bold text-sm text-white">Code d'invitation</h2>
+          <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Code d'invitation</h2>
         </div>
         <p className="text-xs" style={{ color: "var(--text-2)" }}>
           Partagez ce code pour que de nouveaux membres rejoignent votre chorale.
@@ -158,9 +226,9 @@ export default function ParametresPage() {
           <button onClick={copyCode}
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
             style={{
-              background: copied ? "rgba(29,158,117,0.2)" : "var(--gold-dim)",
-              border: `1px solid ${copied ? "#1D9E75" : "var(--border-gold)"}`,
-              color: copied ? "#1D9E75" : "var(--gold)",
+              background: copied ? "rgba(34,197,94,0.15)" : "var(--gold-dim)",
+              border: `1px solid ${copied ? "#22C55E" : "var(--border-gold)"}`,
+              color: copied ? "#22C55E" : "var(--gold)",
             }}>
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
           </button>
@@ -180,7 +248,7 @@ export default function ParametresPage() {
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" style={{ color: "var(--violet)" }} />
-            <h2 className="font-bold text-sm text-white">Membres</h2>
+            <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Membres</h2>
           </div>
           <span className="badge" style={{ background: "var(--violet-dim)", color: "var(--violet)" }}>
             {members.length}
@@ -232,7 +300,7 @@ export default function ParametresPage() {
       <div className="card space-y-3">
         <div className="flex items-center gap-2">
           <div className="ai-badge">API</div>
-          <h2 className="font-bold text-sm text-white">Web Service API</h2>
+          <h2 className="font-bold text-sm" style={{ color: "var(--text-1)" }}>Web Service API</h2>
         </div>
         <p className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
           Cantor expose une API REST consommable depuis n'importe quel client.
@@ -261,7 +329,7 @@ export default function ParametresPage() {
 
       {/* Cantor branding */}
       <div className="flex justify-center pt-4 pb-2">
-        <CantorIcon size={32} showText />
+        <Link href="/dashboard"><CantorIcon size={32} showText /></Link>
       </div>
     </div>
   );

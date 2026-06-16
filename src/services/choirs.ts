@@ -4,7 +4,7 @@ export async function getChoirByUser(userId: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("choir_members")
-    .select("choir_id, role, voice, choirs(id, name, description, invite_code, created_at, owner_id)")
+    .select("choir_id, role, voice, choirs(id, name, description, invite_code, logo_url, city, created_at, owner_id)")
     .eq("user_id", userId)
     .limit(1)
     .single();
@@ -20,7 +20,12 @@ export async function getChoirMembers(choirId: string) {
     .order("joined_at");
 }
 
-export async function updateChoir(choirId: string, data: { name?: string; description?: string }) {
+export async function updateChoir(choirId: string, data: {
+  name?: string;
+  description?: string;
+  logo_url?: string;
+  city?: string;
+}) {
   const supabase = await createClient();
   return supabase.from("choirs").update(data).eq("id", choirId).select("id").single();
 }

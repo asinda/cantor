@@ -1,197 +1,187 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthContext } from "@/lib/auth";
+import { listSongsFiltered } from "@/services/songs";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
-import { LITURGICAL_GRADIENTS, STATUS_BG, LITURGICAL_TYPES, DIFFICULTIES, SONG_STATUSES } from "@/types";
+import { Plus, Search, X, Play } from "lucide-react";
+import { LITURGICAL_GRADIENTS, LITURGICAL_TYPES, SONG_STATUSES } from "@/types";
 
-const DIFF_COLORS: Record<string, string> = {
-  facile:    "#4ade80",
-  moyen:     "#C9A227",
-  difficile: "#f87171",
+const STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  nouveau:  { bg: "rgba(168,137,106,0.14)", color: "#A8896A", label: "Nouveau"  },
+  en_cours: { bg: "rgba(251,191,36,0.14)",  color: "#FBBF24", label: "En cours" },
+  appris:   { bg: "rgba(110,231,183,0.14)", color: "#6EE7B7", label: "Appris"   },
+};
+
+const GENRE_COLORS: Record<string, string> = {
+  "entrée":     "linear-gradient(135deg,#7c3aed,#db2777)",
+  "kyrie":      "linear-gradient(135deg,#374151,#6B7280)",
+  "gloria":     "linear-gradient(135deg,#d97706,#ea580c)",
+  "psaume":     "linear-gradient(135deg,#059669,#0d9488)",
+  "alléluia":   "linear-gradient(135deg,#b45309,#d97706)",
+  "offertoire": "linear-gradient(135deg,#0284c7,#0891b2)",
+  "sanctus":    "linear-gradient(135deg,#2563eb,#4f46e5)",
+  "agnus dei":  "linear-gradient(135deg,#dc2626,#be185d)",
+  "notre père": "linear-gradient(135deg,#0f766e,#0d9488)",
+  "communion":  "linear-gradient(135deg,#16a34a,#059669)",
+  "sortie":     "linear-gradient(135deg,#4f46e5,#7c3aed)",
 };
 
 export default async function SongsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; diff?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; status?: string }>;
 }) {
-  const { q, type, diff, status } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { q, type, status } = await searchParams;
+  const { choirId } = await getAuthContext();
 
-  const { data: membership } = await supabase
-    .from("choir_members").select("choir_id").eq("user_id", user!.id).limit(1).single();
-
-  const choirId = (membership as any)?.choir_id;
-  let songs: any[] = [];
-
-  if (choirId) {
-    let query = supabase
-      .from("songs")
-      .select("id,title,liturgical_type,status,difficulty,key_signature,composer,languages,tempo_bpm")
-      .eq("choir_id", choirId)
-      .order("title");
-
-    if (q)      query = query.ilike("title", `%${q}%`);
-    if (type)   query = query.eq("liturgical_type", type);
-    if (diff)   query = query.eq("difficulty", diff);
-    if (status) query = query.eq("status", status);
-
-    const { data } = await query;
-    songs = data ?? [];
-  }
+  const songs: any[] = choirId
+    ? (await listSongsFiltered(choirId, { q, type, status })).data ?? []
+    : [];
 
   const GRAD: Record<string, string> = LITURGICAL_GRADIENTS;
+  const hasFilters = !!(q || type || status);
 
   function buildHref(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { q, type, diff, status, ...overrides };
+    const merged = { q, type, status, ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
-    const str = params.toString();
-    return `/chants${str ? `?${str}` : ""}`;
+    const s = params.toString();
+    return `/chants${s ? `?${s}` : ""}`;
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 space-y-5 fade-in">
+    <div className="max-w-3xl mx-auto px-6 pt-6 pb-28 space-y-5 fade-in">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Chants</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-2)" }}>
-            {songs.length} {songs.length === 1 ? "chant" : "chants"}
-          </p>
-        </div>
-        <Link href="/chants/nouveau" className="btn btn-primary">
-          <Plus className="w-4 h-4" /> Ajouter
+      {/* En-tête */}
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-1)" }}>
+          Bibliothèque
+        </h1>
+        <Link href="/chants/nouveau" className="btn btn-sm"
+          style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)", color: "#0C0906", fontWeight: 700 }}>
+          <Plus className="w-3.5 h-3.5" /> Ajouter
         </Link>
       </div>
 
-      {/* Search */}
+      {/* Recherche */}
       <form method="GET" className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-3)" }} />
-        <input name="q" defaultValue={q} placeholder="Rechercher un chant…"
-          className="pl-10" style={{ background: "var(--surface)", border: "1px solid var(--border)" }} />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+          style={{ color: "var(--text-3)" }} />
+        <input name="q" defaultValue={q} placeholder="Titres, compositeurs, types…" className="pl-10 pr-8" />
         {type   && <input type="hidden" name="type"   value={type} />}
-        {diff   && <input type="hidden" name="diff"   value={diff} />}
         {status && <input type="hidden" name="status" value={status} />}
+        {q && (
+          <Link href={buildHref({ q: undefined })}
+            className="absolute right-3 top-1/2 -translate-y-1/2"
+            style={{ color: "var(--text-3)" }}>
+            <X className="w-4 h-4" />
+          </Link>
+        )}
       </form>
 
-      {/* Type liturgique */}
-      <div className="h-scroll">
-        <Link href={buildHref({ type: undefined })}
-          className={`chip flex-shrink-0 ${!type ? "chip-on" : "chip-off"}`}>Tous</Link>
-        {LITURGICAL_TYPES.map((t) => (
-          <Link key={t.value} href={buildHref({ type: t.value })}
-            className={`chip flex-shrink-0 ${type === t.value ? "chip-on" : "chip-off"}`}>
-            {t.label}
+      {/* Onglets statut */}
+      <div className="lib-tabs">
+        <Link href={buildHref({ status: undefined })}
+          className={`lib-tab ${!status ? "lib-tab-on" : "lib-tab-off"}`}>Tout</Link>
+        {SONG_STATUSES.map(s => (
+          <Link key={s} href={buildHref({ status: status === s ? undefined : s })}
+            className={`lib-tab ${status === s ? "lib-tab-on" : "lib-tab-off"}`}>
+            {STATUS_STYLE[s]?.label ?? s}
           </Link>
         ))}
       </div>
 
-      {/* Difficulté + Statut */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
-            Difficulté :
-          </span>
-          <div className="flex gap-1">
-            {DIFFICULTIES.map((d) => (
-              <Link key={d} href={buildHref({ diff: diff === d ? undefined : d })}
-                className="chip text-xs py-1 px-2.5"
-                style={{
-                  background: diff === d ? `${DIFF_COLORS[d]}20` : "var(--surface-2)",
-                  color:      diff === d ? DIFF_COLORS[d]         : "var(--text-2)",
-                  border:     `1px solid ${diff === d ? DIFF_COLORS[d] + "50" : "var(--border)"}`,
-                  borderRadius: "0.75rem",
-                }}>
-                {d}
+      {/* Genres */}
+      {!hasFilters && choirId && (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3"
+            style={{ color: "var(--text-3)" }}>Parcourir par type</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
+            {LITURGICAL_TYPES.map(t => (
+              <Link key={t.value} href={buildHref({ type: t.value })}
+                className="genre-tile"
+                style={{ background: GENRE_COLORS[t.value] ?? "var(--surface-2)" }}>
+                <span className="genre-tile-label">{t.label}</span>
               </Link>
             ))}
           </div>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-3)" }}>
-            Statut :
-          </span>
-          <div className="flex gap-1">
-            {SONG_STATUSES.map((s) => (
-              <Link key={s} href={buildHref({ status: status === s ? undefined : s })}
-                className={`chip text-xs py-1 px-2.5 ${status === s ? STATUS_BG[s] ?? "" : "chip-off"}`}
-                style={{ borderRadius: "0.75rem" }}>
-                {s.replace("_", " ")}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* No choir */}
-      {!choirId && (
-        <div className="card text-center py-10 space-y-3">
-          <p className="text-3xl">🎵</p>
-          <p className="font-black text-white">Aucune chorale configurée</p>
-          <Link href="/onboarding" className="btn btn-primary inline-flex">Configurer</Link>
         </div>
       )}
 
-      {/* Empty */}
+      {/* Type actif */}
+      {type && (
+        <Link href={buildHref({ type: undefined })}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+          style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border-2)" }}>
+          <span className="capitalize">{type}</span>
+          <X className="w-3.5 h-3.5" />
+        </Link>
+      )}
+
+      {/* Vide */}
       {choirId && songs.length === 0 && (
-        <div className="card text-center py-12 space-y-4">
-          <p className="text-4xl">🎼</p>
-          <div>
-            <p className="font-black text-white text-lg">Aucun chant trouvé</p>
-            <p className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
-              {(q || type || diff || status) ? "Modifiez vos filtres ou " : ""}Ajoutez votre premier chant.
-            </p>
+        <div className="text-center py-12 space-y-3">
+          <div className="text-4xl">🎼</div>
+          <p className="font-semibold" style={{ color: "var(--text-1)" }}>
+            {hasFilters ? "Aucun résultat" : "Bibliothèque vide"}
+          </p>
+          <div className="flex gap-2 justify-center">
+            {hasFilters && (
+              <Link href="/chants" className="btn btn-secondary btn-sm">
+                <X className="w-3.5 h-3.5" /> Réinitialiser
+              </Link>
+            )}
+            {!hasFilters && (
+              <Link href="/chants/nouveau" className="btn btn-sm"
+                style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)", color: "#0C0906", fontWeight: 700 }}>
+                <Plus className="w-3.5 h-3.5" /> Premier chant
+              </Link>
+            )}
           </div>
-          <Link href="/chants/nouveau" className="btn btn-primary inline-flex">
-            <Plus className="w-4 h-4" /> Nouveau chant
-          </Link>
         </div>
       )}
 
       {/* Liste */}
       {songs.length > 0 && (
-        <div className="card" style={{ padding: "0.5rem" }}>
-          {songs.map((song: any, i: number) => {
-            const grad      = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#C9A227,#7F77DD)";
-            const diffColor = DIFF_COLORS[song.difficulty ?? ""] ?? "var(--text-3)";
-            return (
-              <div key={song.id}>
-                <Link href={`/chants/${song.id}`} className="song-row">
-                  <div className="cover-art flex-shrink-0 font-black text-white/80"
-                    style={{ background: grad, width: 48, height: 48, fontSize: "0.65rem" }}>
-                    {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-white truncate">{song.title}</p>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>
-                      {[song.composer, song.key_signature, song.tempo_bpm ? `${song.tempo_bpm} BPM` : null]
-                        .filter(Boolean).join(" · ") || song.liturgical_type || "—"}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      {song.languages?.map((lang: string) => (
-                        <span key={lang} className="text-xs px-1.5 py-0.5 rounded font-bold uppercase"
-                          style={{ background: "var(--surface-3)", color: "var(--text-2)", fontSize: "0.6rem" }}>
-                          {lang}
-                        </span>
-                      ))}
-                      {song.difficulty && (
-                        <span className="text-xs font-bold" style={{ color: diffColor, fontSize: "0.6rem" }}>
-                          ● {song.difficulty}
+        <div>
+          <p className="text-xs mb-3" style={{ color: "var(--text-3)" }}>
+            {songs.length} {songs.length === 1 ? "chant" : "chants"}
+          </p>
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            {songs.map((song: any, i: number) => {
+              const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#201A12,#342C22)";
+              const st   = STATUS_STYLE[song.status ?? ""];
+              return (
+                <div key={song.id}>
+                  <Link href={`/chants/${song.id}`} className="content-row">
+                    <div className="content-row-thumb" style={{ background: grad, width: 44, height: 44 }}>
+                      {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: "var(--text-1)" }}>
+                        {song.title}
+                      </p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>
+                        {song.composer || song.liturgical_type || "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {st && (
+                        <span className="badge" style={{ background: st.bg, color: st.color }}>
+                          {st.label}
                         </span>
                       )}
+                      <button className="play-btn">
+                        <Play className="w-4 h-4 text-white ml-0.5" fill="white"/>
+                      </button>
                     </div>
-                  </div>
-                  <span className={`badge flex-shrink-0 ${STATUS_BG[song.status ?? ""] ?? "bg-gray-900 text-gray-400 border border-gray-700"}`}>
-                    {song.status?.replace("_", " ")}
-                  </span>
-                </Link>
-                {i < songs.length - 1 && <div className="divider mx-3" />}
-              </div>
-            );
-          })}
+                  </Link>
+                  {i < songs.length - 1 && (
+                    <div className="mx-4" style={{ height: 1, background: "var(--border)" }}/>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

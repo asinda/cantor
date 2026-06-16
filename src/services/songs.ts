@@ -9,6 +9,54 @@ export async function listSongs(choirId: string) {
     .order("updated_at", { ascending: false });
 }
 
+export async function listSongsFiltered(
+  choirId: string,
+  filters: { q?: string; type?: string; diff?: string; status?: string }
+) {
+  const supabase = await createClient();
+  let query = supabase
+    .from("songs")
+    .select("id,title,liturgical_type,status,difficulty,key_signature,composer,languages,tempo_bpm")
+    .eq("choir_id", choirId)
+    .order("title");
+
+  if (filters.q)      query = query.ilike("title", `%${filters.q}%`);
+  if (filters.type)   query = query.eq("liturgical_type", filters.type);
+  if (filters.diff)   query = query.eq("difficulty", filters.diff);
+  if (filters.status) query = query.eq("status", filters.status);
+
+  return query;
+}
+
+export async function getRecentSongs(choirId: string, limit = 6) {
+  const supabase = await createClient();
+  return supabase
+    .from("songs")
+    .select("id,title,liturgical_type,status,key_signature,composer")
+    .eq("choir_id", choirId)
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+}
+
+export async function listSongsForProgramme(choirId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("songs")
+    .select("id,title,liturgical_type,key_signature,status")
+    .eq("choir_id", choirId)
+    .order("liturgical_type")
+    .order("title");
+}
+
+export async function countSongs(choirId: string) {
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("songs")
+    .select("*", { count: "exact", head: true })
+    .eq("choir_id", choirId);
+  return count ?? 0;
+}
+
 export async function getSong(id: string) {
   const supabase = await createClient();
   return supabase.from("songs").select("*").eq("id", id).single();

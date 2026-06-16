@@ -8,32 +8,29 @@ export default function Icon() {
     <div
       style={{
         width: 64, height: 64,
-        background: "#0B1B2B",
+        background: "#FAFAF8",
         borderRadius: 14,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      {/* Treble clef SVG — gold stroke on dark background */}
-      <svg
-        width={28} height={54}
-        viewBox="0 0 50 100"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* Spine */}
-        <path d="M 22 5 L 22 82"
-          stroke="#C9A227" strokeWidth="3.8" strokeLinecap="round" />
-        {/* Top flag */}
-        <path d="M 22 6 C 40 2, 46 16, 38 26 C 30 36, 22 34, 22 32"
-          stroke="#C9A227" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Body oval */}
-        <path d="M 22 28 C 24 18, 40 20, 40 36 C 40 52, 22 56, 12 48 C 4 40, 8 26, 22 28"
-          stroke="#C9A227" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Bottom spiral */}
-        <path d="M 22 78 C 34 74, 38 84, 30 90 C 22 96, 8 94, 8 86 C 8 78, 16 73, 22 76"
-          stroke="#C9A227" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Monogramme C note — nouveau logo */}
+      <svg width={44} height={44} viewBox="0 0 100 100" fill="none">
+        {/* Arc C */}
+        <path
+          d="M 71.9,23.9 A 34,34 0 1,0 71.9,76.1"
+          stroke="#B8721A"
+          strokeWidth="9"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Tête de note */}
+        <ellipse cx="62" cy="58" rx="9" ry="6"
+          transform="rotate(-22 62 58)" fill="#B8721A" />
+        {/* Hampe */}
+        <line x1="70" y1="54" x2="70" y2="28"
+          stroke="#B8721A" strokeWidth="5" strokeLinecap="round" />
       </svg>
     </div>,
     { ...size },

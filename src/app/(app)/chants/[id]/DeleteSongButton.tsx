@@ -1,16 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { deleteSongAction } from "@/actions/songs";
 
 export default function DeleteSongButton({ id }: { id: string }) {
-  const router = useRouter();
-
   async function handleDelete() {
     if (!confirm("Supprimer ce chant ?")) return;
-    const supabase = createClient();
-    await supabase.from("songs").delete().eq("id", id);
-    router.push("/chants");
+    await deleteSongAction(id);
   }
 
   return (

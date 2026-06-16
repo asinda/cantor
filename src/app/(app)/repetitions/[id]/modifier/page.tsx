@@ -1,4 +1,6 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthContext } from "@/lib/auth";
+import { getRehearsal, getRehearsalSongs } from "@/services/repetitions";
+import { listSongsForProgramme } from "@/services/songs";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -6,29 +8,22 @@ import RehearsalForm from "../../nouveau/RehearsalForm";
 
 export default async function EditRehearsalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { choirId } = await getAuthContext();
 
-  const [{ data: rehearsal }, { data: membership }, { data: rehearsalSongs }] = await Promise.all([
-    supabase.from("rehearsals").select("*").eq("id", id).single(),
-    supabase.from("choir_members").select("choir_id").eq("user_id", user!.id).limit(1).single(),
-    supabase.from("rehearsal_songs").select("song_id").eq("rehearsal_id", id).order("order_index"),
+  const [{ data: rehearsal }, { data: rehearsalSongs }] = await Promise.all([
+    getRehearsal(id),
+    getRehearsalSongs(id),
   ]);
 
   if (!rehearsal) notFound();
 
-  const choirId = (membership as any)?.choir_id ?? rehearsal.choir_id;
-
-  const { data: songs } = await supabase
-    .from("songs")
-    .select("id,title,liturgical_type,status")
-    .eq("choir_id", choirId)
-    .order("title");
+  const resolvedChoirId = choirId ?? rehearsal.choir_id;
+  const { data: songs } = await listSongsForProgramme(resolvedChoirId);
 
   const initial = {
-    id: rehearsal.id,
-    date: rehearsal.date,
-    notes: rehearsal.notes,
+    id:            rehearsal.id,
+    date:          rehearsal.date,
+    notes:         rehearsal.notes,
     initialPicked: (rehearsalSongs ?? []).map((s: any) => s.song_id),
   };
 
@@ -39,12 +34,12 @@ export default async function EditRehearsalPage({ params }: { params: Promise<{ 
         <ArrowLeft className="w-4 h-4" /> Retour
       </Link>
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight">Modifier</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-1)" }}>Modifier</h1>
         <p className="text-sm mt-0.5" style={{ color: "var(--text-2)" }}>
           {new Date(rehearsal.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
         </p>
       </div>
-      <RehearsalForm choirId={choirId} songs={songs ?? []} initial={initial} />
+      <RehearsalForm choirId={resolvedChoirId} songs={songs ?? []} initial={initial} />
     </div>
   );
 }

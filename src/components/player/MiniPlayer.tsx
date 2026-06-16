@@ -119,7 +119,7 @@ export default function MiniPlayer() {
   if (!track) return ytContainer;
 
   const GRAD      = LITURGICAL_GRADIENTS as Record<string, string>;
-  const grad      = GRAD[track.liturgical_type ?? ""] ?? "linear-gradient(135deg,#C9A227,#7F77DD)";
+  const grad      = GRAD[track.liturgical_type ?? ""] ?? "linear-gradient(135deg,#8B5CF6,#F0B429)";
   const voiceColor = voice ? (VOICE_COLORS[voice] ?? "var(--gold)") : "var(--gold)";
   const hasYt     = !!youtubeVideoId;
 

@@ -1,16 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { deleteMasseAction } from "@/actions/messe";
 
 export default function DeleteSheetButton({ id }: { id: string }) {
-  const router = useRouter();
-
   async function handleDelete() {
     if (!confirm("Supprimer cette feuille de messe ?")) return;
-    const supabase = createClient();
-    await supabase.from("mass_sheets").delete().eq("id", id);
-    router.push("/messe");
+    await deleteMasseAction(id);
   }
 
   return (

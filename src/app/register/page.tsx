@@ -33,7 +33,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
 
         <div className="flex items-center justify-center gap-3 mb-8">
-          <CantorIcon size={48} showText white />
+          <Link href="/"><CantorIcon size={48} showText white /></Link>
         </div>
 
         <div className="space-y-2 mb-8">
@@ -81,7 +81,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm mt-6" style={{ color: "var(--text-2)" }}>
           Déjà un compte ?{" "}
-          <Link href="/login" className="font-semibold" style={{ color: "#7F77DD" }}>
+          <Link href="/login" className="font-semibold" style={{ color: "#8B5CF6" }}>
             Se connecter
           </Link>
         </p>

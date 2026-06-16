@@ -1,27 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthContext } from "@/lib/auth";
+import { listRehearsals } from "@/services/repetitions";
 import Link from "next/link";
-import { Plus, Calendar, ChevronRight } from "lucide-react";
+import { Plus, Calendar, ChevronRight, MapPin, Clock } from "lucide-react";
 
 export default async function RepetitionsPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { choirId } = await getAuthContext();
 
-  const { data: membership } = await supabase
-    .from("choir_members").select("choir_id").eq("user_id", user!.id).limit(1).single();
+  const rehearsals: any[] = choirId
+    ? (await listRehearsals(choirId)).data ?? []
+    : [];
 
-  const choirId = (membership as any)?.choir_id;
-  let rehearsals: any[] = [];
-
-  if (choirId) {
-    const { data } = await supabase
-      .from("rehearsals")
-      .select("id,date,notes")
-      .eq("choir_id", choirId)
-      .order("date", { ascending: false });
-    rehearsals = data ?? [];
-  }
-
-  const now   = new Date();
+  const now      = new Date();
   const upcoming = rehearsals.filter((r) => new Date(r.date) >= now);
   const past     = rehearsals.filter((r) => new Date(r.date) <  now);
 
@@ -37,24 +26,25 @@ export default async function RepetitionsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 space-y-5 fade-in">
+    <div className="max-w-3xl mx-auto px-6 pt-6 pb-24 space-y-5 fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Répétitions</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-2)" }}>
-            {rehearsals.length} {rehearsals.length === 1 ? "répétition" : "répétitions"}
-          </p>
-        </div>
-        <Link href="/repetitions/nouveau" className="btn btn-primary">
-          <Plus className="w-4 h-4" /> Planifier
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--text-1)" }}>
+          Répétitions
+        </h1>
+        <Link href="/repetitions/nouveau" className="btn btn-sm"
+          style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)", color: "#0C0906", fontWeight: 700 }}>
+          <Plus className="w-3.5 h-3.5" /> Planifier
         </Link>
       </div>
 
       {!choirId && (
         <div className="card text-center py-10 space-y-3">
           <Calendar className="w-10 h-10 mx-auto" style={{ color: "var(--text-3)" }} />
-          <p className="font-black text-white">Aucune chorale configurée</p>
-          <Link href="/onboarding" className="btn btn-primary inline-flex">Configurer</Link>
+          <p className="font-semibold" style={{ color: "var(--text-1)" }}>Aucune chorale configurée</p>
+          <Link href="/onboarding" className="btn btn-sm inline-flex"
+            style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)", color: "#0C0906", fontWeight: 700 }}>
+            Configurer
+          </Link>
         </div>
       )}
 
@@ -62,13 +52,14 @@ export default async function RepetitionsPage() {
         <div className="card text-center py-12 space-y-4">
           <p className="text-4xl">📅</p>
           <div>
-            <p className="font-black text-white text-lg">Aucune répétition planifiée</p>
+            <p className="font-bold text-lg" style={{ color: "var(--text-1)" }}>Aucune répétition planifiée</p>
             <p className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
               Planifiez votre prochaine session de travail.
             </p>
           </div>
-          <Link href="/repetitions/nouveau" className="btn btn-primary inline-flex">
-            <Plus className="w-4 h-4" /> Planifier
+          <Link href="/repetitions/nouveau" className="btn btn-sm inline-flex"
+            style={{ background: "linear-gradient(135deg,#F59E0B,#D97706)", color: "#0C0906", fontWeight: 700 }}>
+            <Plus className="w-3.5 h-3.5" /> Planifier
           </Link>
         </div>
       )}
@@ -78,35 +69,49 @@ export default async function RepetitionsPage() {
           <div className="section-header">
             <h2 className="section-title">À venir</h2>
           </div>
-          <div className="space-y-2.5">
-            {upcoming.map((r: any) => (
-              <Link key={r.id} href={`/repetitions/${r.id}`}
-                className="card flex items-center gap-4 hover:border-opacity-30 transition-all active:scale-[0.99]"
-                style={{
-                  padding: "0.875rem 1rem",
-                  borderColor: isToday(r.date) ? "rgba(127,119,221,0.4)" : undefined,
-                }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: isToday(r.date) ? "var(--violet-dim)" : "rgba(245,158,11,0.15)" }}>
-                  <Calendar className="w-5 h-5"
-                    style={{ color: isToday(r.date) ? "#7F77DD" : "#F59E0B" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm text-white capitalize">{dateLabel(r.date)}</p>
-                    {isToday(r.date) && (
-                      <span className="text-xs px-2 py-0.5 rounded-full font-bold"
-                        style={{ background: "var(--violet-dim)", color: "#7F77DD" }}>
-                        Aujourd'hui
-                      </span>
-                    )}
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+            {upcoming.map((r: any, i: number) => (
+              <div key={r.id}>
+                <Link href={`/repetitions/${r.id}`} className="content-row">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: isToday(r.date) ? "rgba(251,191,36,0.2)" : "rgba(245,158,11,0.14)",
+                      border: isToday(r.date) ? "1px solid rgba(251,191,36,0.35)" : "none" }}>
+                    <Calendar className="w-4.5 h-4.5" strokeWidth={2}
+                      style={{ color: "#FBBF24" }} />
                   </div>
-                  {r.notes && (
-                    <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>{r.notes}</p>
-                  )}
-                </div>
-                <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
-              </Link>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold capitalize" style={{ color: "var(--text-1)" }}>
+                        {dateLabel(r.date)}
+                      </p>
+                      {isToday(r.date) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-bold"
+                          style={{ background: "rgba(251,191,36,0.18)", color: "#FBBF24" }}>
+                          Aujourd'hui
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      {r.time && (
+                        <span className="flex items-center gap-1 text-xs" style={{ color: "var(--text-2)" }}>
+                          <Clock className="w-3 h-3" /> {r.time.slice(0,5)}
+                        </span>
+                      )}
+                      {r.location && (
+                        <span className="flex items-center gap-1 text-xs truncate" style={{ color: "var(--text-2)" }}>
+                          <MapPin className="w-3 h-3 flex-shrink-0" /> {r.location}
+                        </span>
+                      )}
+                      {!r.time && !r.location && r.notes && (
+                        <p className="text-xs truncate" style={{ color: "var(--text-2)" }}>{r.notes}</p>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
+                </Link>
+                {i < upcoming.length - 1 && <div className="mx-4" style={{ height: 1, background: "var(--border)" }}/>}
+              </div>
             ))}
           </div>
         </div>
@@ -117,23 +122,35 @@ export default async function RepetitionsPage() {
           <div className="section-header">
             <h2 className="section-title">Passées</h2>
           </div>
-          <div className="card" style={{ padding: "0.5rem" }}>
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
             {past.map((r: any, i: number) => (
               <div key={r.id}>
-                <Link href={`/repetitions/${r.id}`} className="song-row">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: "var(--surface-3)" }}>
-                    <Calendar className="w-4 h-4" style={{ color: "var(--text-3)" }} />
+                <Link href={`/repetitions/${r.id}`} className="content-row">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "var(--surface-2)" }}>
+                    <Calendar className="w-4 h-4" style={{ color: "var(--text-3)" }} strokeWidth={2}/>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white capitalize">{dateLabel(r.date)}</p>
-                    {r.notes && (
-                      <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>{r.notes}</p>
-                    )}
+                    <p className="text-sm font-medium capitalize" style={{ color: "var(--text-1)" }}>
+                      {dateLabel(r.date)}
+                    </p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      {r.time && (
+                        <span className="flex items-center gap-1 text-xs" style={{ color: "var(--text-2)" }}>
+                          <Clock className="w-3 h-3" /> {r.time.slice(0,5)}
+                        </span>
+                      )}
+                      {r.location && (
+                        <span className="flex items-center gap-1 text-xs truncate" style={{ color: "var(--text-2)" }}>
+                          <MapPin className="w-3 h-3 flex-shrink-0" /> {r.location}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "var(--text-3)" }} />
                 </Link>
-                {i < past.length - 1 && <div className="divider mx-3" />}
+                {i < past.length - 1 && <div className="mx-4" style={{ height: 1, background: "var(--border)" }}/>}
               </div>
             ))}
           </div>

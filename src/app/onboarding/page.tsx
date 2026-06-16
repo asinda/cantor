@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import CantorIcon from "@/components/CantorIcon";
 import { createClient } from "@/lib/supabase/client";
@@ -37,7 +38,7 @@ export default function OnboardingPage() {
       choir_id: choir.id, user_id: user.id, role: "chef",
     });
 
-    router.push("/");
+    router.push("/dashboard");
   }
 
   async function handleJoin(e: React.FormEvent) {
@@ -65,7 +66,7 @@ export default function OnboardingPage() {
     });
 
     if (joinErr) { setError(joinErr.message); setLoading(false); return; }
-    router.push("/");
+    router.push("/dashboard");
   }
 
   return (
@@ -75,7 +76,7 @@ export default function OnboardingPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-10 text-center">
-          <CantorIcon size={56} showText />
+          <Link href="/"><CantorIcon size={56} showText /></Link>
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight">Bienvenue sur Cantor</h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-2)" }}>
@@ -104,7 +105,7 @@ export default function OnboardingPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="card space-y-4">
               <div className="flex items-center gap-2 mb-1">
-                <Plus className="w-4 h-4" style={{ color: "#7F77DD" }} />
+                <Plus className="w-4 h-4" style={{ color: "#8B5CF6" }} />
                 <p className="font-bold text-sm text-white">Nouvelle chorale</p>
               </div>
               <div>
@@ -137,7 +138,7 @@ export default function OnboardingPage() {
           <form onSubmit={handleJoin} className="space-y-4">
             <div className="card space-y-4">
               <div className="flex items-center gap-2 mb-1">
-                <Users className="w-4 h-4" style={{ color: "#7F77DD" }} />
+                <Users className="w-4 h-4" style={{ color: "#8B5CF6" }} />
                 <p className="font-bold text-sm text-white">Rejoindre une chorale</p>
               </div>
               <div>

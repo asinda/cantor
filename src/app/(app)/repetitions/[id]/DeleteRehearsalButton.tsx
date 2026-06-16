@@ -1,16 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { deleteRehearsalAction } from "@/actions/repetitions";
 
 export default function DeleteRehearsalButton({ id }: { id: string }) {
-  const router = useRouter();
-
   async function handleDelete() {
     if (!confirm("Supprimer cette répétition ?")) return;
-    const supabase = createClient();
-    await supabase.from("rehearsals").delete().eq("id", id);
-    router.push("/repetitions");
+    await deleteRehearsalAction(id);
   }
 
   return (

@@ -1,35 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRehearsal, getRehearsalProgram } from "@/services/repetitions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Music, Edit2 } from "lucide-react";
+import { ArrowLeft, Calendar, Music, Edit2, Clock, MapPin } from "lucide-react";
 import { LITURGICAL_GRADIENTS } from "@/types";
 import DeleteRehearsalButton from "./DeleteRehearsalButton";
 import MasteryButton from "./MasteryButton";
 
 export default async function RehearsalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const { data: rehearsal } = await supabase
-    .from("rehearsals").select("*").eq("id", id).single();
+  const [{ data: rehearsal }, { data: rehearsalSongs }] = await Promise.all([
+    getRehearsal(id),
+    getRehearsalProgram(id),
+  ]);
 
   if (!rehearsal) notFound();
 
-  const { data: rehearsalSongs } = await supabase
-    .from("rehearsal_songs")
-    .select("order_index, songs(id,title,liturgical_type,key_signature,status,composer,difficulty)")
-    .eq("rehearsal_id", id)
-    .order("order_index");
-
   const GRAD: Record<string, string> = LITURGICAL_GRADIENTS;
-  const songs = (rehearsalSongs ?? []).sort((a, b) => a.order_index - b.order_index);
+  const songs = (rehearsalSongs ?? []).sort((a: any, b: any) => a.order_index - b.order_index);
 
   const dateStr = new Date(rehearsal.date).toLocaleDateString("fr-FR", {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
-  const timeStr = new Date(rehearsal.date).toLocaleTimeString("fr-FR", {
-    hour: "2-digit", minute: "2-digit",
-  });
+  const timeStr = rehearsal.time
+    ? rehearsal.time.slice(0, 5)
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto px-4 pt-6 pb-24 space-y-5 fade-in">
@@ -48,14 +43,24 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
 
       {/* Hero */}
       <div className="card overflow-hidden" style={{ padding: 0 }}>
-        <div className="p-5"
-          style={{ background: "linear-gradient(135deg, #1A100A 0%, #1A1A0A 100%)" }}>
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-            style={{ background: "rgba(245,158,11,0.2)" }}>
-            <Calendar className="w-6 h-6" style={{ color: "#F59E0B" }} />
+        <div className="p-5" style={{ background: "linear-gradient(135deg,#5C3200,#A0621A)" }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+            style={{ background: "rgba(255,255,255,0.15)" }}>
+            <Calendar className="w-5 h-5 text-white" strokeWidth={2} />
           </div>
-          <h1 className="text-xl font-black text-white tracking-tight capitalize">{dateStr}</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>{timeStr}</p>
+          <h1 className="text-xl font-bold text-white tracking-tight capitalize">{dateStr}</h1>
+          <div className="flex items-center gap-4 mt-2 flex-wrap">
+            {timeStr && (
+              <span className="flex items-center gap-1.5 text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+                <Clock className="w-3.5 h-3.5" /> {timeStr}
+              </span>
+            )}
+            {rehearsal.location && (
+              <span className="flex items-center gap-1.5 text-sm" style={{ color: "rgba(255,255,255,0.75)" }}>
+                <MapPin className="w-3.5 h-3.5" /> {rehearsal.location}
+              </span>
+            )}
+          </div>
         </div>
         {rehearsal.notes && (
           <div className="px-5 py-3" style={{ borderTop: "1px solid var(--border)" }}>
@@ -81,7 +86,7 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
             {songs.map((entry: any, i: number) => {
               const song = entry.songs;
               if (!song) return null;
-              const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#7F77DD,#1D9E75)";
+              const grad = GRAD[song.liturgical_type ?? ""] ?? "linear-gradient(135deg,#8B5CF6,#22C55E)";
               return (
                 <div key={i}>
                   <div className="song-row">
@@ -95,7 +100,7 @@ export default async function RehearsalDetailPage({ params }: { params: Promise<
                         {(song.liturgical_type ?? "?").slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-white truncate">{song.title}</p>
+                        <p className="font-semibold text-sm truncate" style={{ color: "var(--text-1)" }}>{song.title}</p>
                         <p className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>
                           {[song.composer, song.key_signature].filter(Boolean).join(" · ") || song.liturgical_type || "—"}
                         </p>

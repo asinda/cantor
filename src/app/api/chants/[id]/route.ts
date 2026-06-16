@@ -29,8 +29,31 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const body = await req.json();
-  const { data, error } = await updateSong(id, body);
+  const { lyrics, youtube_links, voice_guides, ...songFields } = body;
+
+  const { data, error } = await updateSong(id, songFields);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (lyrics !== undefined) {
+    await supabase.from("song_lyrics").delete().eq("song_id", id);
+    if (lyrics.length > 0) {
+      await supabase.from("song_lyrics").insert(lyrics.map((l: any) => ({ ...l, song_id: id })));
+    }
+  }
+
+  if (youtube_links !== undefined) {
+    await supabase.from("youtube_links").delete().eq("song_id", id);
+    if (youtube_links.length > 0) {
+      await supabase.from("youtube_links").insert(youtube_links.map((l: any) => ({ ...l, song_id: id })));
+    }
+  }
+
+  if (voice_guides !== undefined) {
+    await supabase.from("voice_guides").delete().eq("song_id", id);
+    if (voice_guides.length > 0) {
+      await supabase.from("voice_guides").insert(voice_guides.map((g: any) => ({ ...g, song_id: id })));
+    }
+  }
 
   return NextResponse.json({ song: data });
 }

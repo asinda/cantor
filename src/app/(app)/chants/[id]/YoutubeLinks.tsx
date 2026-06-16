@@ -69,7 +69,7 @@ export default function YoutubeLinks({ links, track }: { links: YtLink[]; track:
             {/* Info */}
             <div className="flex-1 min-w-0">
               <button onClick={() => handleClick(yt)} className="text-left w-full" disabled={!hasVideo}>
-                <p className="text-sm font-semibold text-white truncate leading-tight">
+                <p className="text-sm font-semibold truncate leading-tight">
                   {yt.title || yt.url}
                 </p>
                 <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-2)" }}>

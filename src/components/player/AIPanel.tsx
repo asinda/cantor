@@ -23,7 +23,7 @@ const STRUCTURE_LABELS: Record<string, { emoji: string; label: string }> = {
 
 const DIFFICULTY_BAR: Record<string, { width: string; color: string; label: string }> = {
   "facile":    { width: "33%",  color: "#4ade80", label: "Facile" },
-  "moyen":     { width: "66%",  color: "#C9A227", label: "Intermédiaire" },
+  "moyen":     { width: "66%",  color: "#F0B429", label: "Intermédiaire" },
   "difficile": { width: "100%", color: "#f87171", label: "Difficile" },
 };
 

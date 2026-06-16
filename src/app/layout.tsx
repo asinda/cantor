@@ -5,23 +5,15 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Cantor — Chorale liturgique",
-  description: "Plateforme de gestion de chants pour chorales liturgiques multilingues",
+  title: "Cantor — Gestion de répertoire choral",
+  description: "Plateforme de gestion de chants, répétitions et feuilles de messe pour chorales.",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Cantor" },
-  keywords: ["chorale", "liturgie", "chants", "répétition", "messe", "musique sacrée"],
-  icons: {
-    icon:    [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico" },
-    ],
-    apple:   { url: "/favicon.svg", type: "image/svg+xml" },
-    shortcut: "/favicon.svg",
-  },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Cantor" },
+  keywords: ["chorale", "chants", "répétition", "messe", "répertoire"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#C9A227",
+  themeColor: "#FAFAF8",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
