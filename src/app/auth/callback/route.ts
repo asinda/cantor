@@ -5,7 +5,10 @@ import type { NextRequest } from "next/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code  = searchParams.get("code");
-  const next  = searchParams.get("next") ?? "/dashboard";
+  const raw   = searchParams.get("next") ?? "/dashboard";
+  const next  = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\") && !raw.includes("@")
+    ? raw
+    : "/dashboard";
   const error = searchParams.get("error");
 
   // Erreur renvoyée par le provider OAuth (ex: access_denied)

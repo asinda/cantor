@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAuthContextForApi } from "@/lib/auth";
 
 /* ────────────────────────────────────────────────────────────
    API /api/transcribe — Transcription intelligente sans IA
@@ -263,6 +264,9 @@ async function extractYoutubeTranscript(url: string): Promise<string> {
 // ══ Handler principal ══════════════════════════════════════
 
 export async function POST(req: NextRequest) {
+  const auth = await getAuthContextForApi();
+  if (!auth) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
   try {
     const contentType = req.headers.get("content-type") ?? "";
     const isJson      = contentType.includes("application/json");
