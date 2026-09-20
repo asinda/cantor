@@ -198,3 +198,16 @@ export type MassSheet = {
   notes: string | null;
   created_at: string;
 };
+
+export type NotificationType = "song_submitted" | "song_validated" | "song_rejected";
+
+export type Notification = {
+  id: string;
+  choir_id: string;
+  user_id: string;
+  song_id: string | null;
+  type: NotificationType;
+  message: string;
+  read: boolean;
+  created_at: string;
+};

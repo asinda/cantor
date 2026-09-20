@@ -2,6 +2,7 @@
 import Link from "next/link";
 import CantorIcon from "@/components/CantorIcon";
 import { signOutAction } from "@/actions/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 import { LogOut } from "lucide-react";
 
 interface Props {
@@ -35,6 +36,7 @@ export default function TopBar({ userName, choirName }: Props) {
           style={{ background: "var(--gold)", color: "white" }}>
           {(userName ?? "C").slice(0, 1).toUpperCase()}
         </div>
+        <NotificationBell />
         <button
           onClick={() => signOutAction()}
           className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/5"

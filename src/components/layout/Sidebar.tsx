@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Home, Music, BookOpen, Calendar, Settings, LogOut, PanelLeftClose, PanelLeftOpen, CheckCircle } from "lucide-react";
 import CantorIcon from "@/components/CantorIcon";
 import { signOutAction } from "@/actions/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 import { useState } from "react";
 
 const NAV = [
@@ -43,17 +44,20 @@ export default function Sidebar({ userName }: { userName?: string }) {
             <CantorIcon size={28} showText />
           </Link>
         )}
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          className="ml-auto w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/6 flex-shrink-0"
-          style={{ color: "var(--text-3)" }}
-          title={collapsed ? "Déplier" : "Réduire"}
-        >
-          {collapsed
-            ? <PanelLeftOpen className="w-4 h-4" />
-            : <PanelLeftClose className="w-4 h-4" />
-          }
-        </button>
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+          {!collapsed && <NotificationBell />}
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/6 flex-shrink-0"
+            style={{ color: "var(--text-3)" }}
+            title={collapsed ? "Déplier" : "Réduire"}
+          >
+            {collapsed
+              ? <PanelLeftOpen className="w-4 h-4" />
+              : <PanelLeftClose className="w-4 h-4" />
+            }
+          </button>
+        </div>
       </div>
 
       {/* Nav */}
