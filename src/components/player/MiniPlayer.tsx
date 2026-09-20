@@ -16,11 +16,37 @@ const BARS = Array.from({ length: 24 }, (_, i) => ({
   delay: i * 0.04,
 }));
 
+// ── API YouTube IFrame (chargée dynamiquement, pas de types npm) ──
+type YTPlayerEvent = { data: number };
+interface YTPlayer {
+  destroy(): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  setPlaybackRate(rate: number): void;
+}
+interface YTPlayerOptions {
+  videoId: string;
+  width: number;
+  height: number;
+  playerVars: Record<string, number>;
+  events: {
+    onReady: () => void;
+    onStateChange: (e: YTPlayerEvent) => void;
+    onError: () => void;
+  };
+}
+declare global {
+  interface Window {
+    YT?: { Player: new (el: HTMLElement, opts: YTPlayerOptions) => YTPlayer };
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
 export default function MiniPlayer() {
   const { track, isPlaying, speed, voice, youtubeVideoId, toggle, setSpeed, clear, pause } = usePlayer();
 
   const ytContainerRef = useRef<HTMLDivElement>(null);
-  const ytPlayerRef    = useRef<any>(null);
+  const ytPlayerRef    = useRef<YTPlayer | null>(null);
   const ytReadyRef     = useRef(false);
   const speedRef       = useRef(speed);
   const clearRef       = useRef(clear);
@@ -41,24 +67,25 @@ export default function MiniPlayer() {
     }
 
     let destroyed = false;
+    const videoId = youtubeVideoId;
 
     function createPlayer() {
       if (destroyed || !ytContainerRef.current) return;
       ytContainerRef.current.innerHTML = ""; // vider le conteneur
 
-      ytPlayerRef.current = new (window as any).YT.Player(ytContainerRef.current, {
-        videoId: youtubeVideoId,
+      ytPlayerRef.current = new window.YT!.Player(ytContainerRef.current, {
+        videoId,
         width: 1,
         height: 1,
         playerVars: { controls: 0, playsinline: 1, rel: 0, modestbranding: 1 },
         events: {
           onReady: () => {
-            if (destroyed) return;
+            if (destroyed || !ytPlayerRef.current) return;
             ytReadyRef.current = true;
             ytPlayerRef.current.setPlaybackRate(speedRef.current);
             ytPlayerRef.current.playVideo();
           },
-          onStateChange: (e: any) => {
+          onStateChange: (e: YTPlayerEvent) => {
             if (destroyed) return;
             if (e.data === 0) clearRef.current(); // ENDED
           },
@@ -68,12 +95,12 @@ export default function MiniPlayer() {
     }
 
     function loadAndCreate() {
-      if ((window as any).YT?.Player) {
+      if (window.YT?.Player) {
         createPlayer();
       } else {
         // Chaîner sur un callback potentiellement déjà défini
-        const prev = (window as any).onYouTubeIframeAPIReady;
-        (window as any).onYouTubeIframeAPIReady = () => { prev?.(); createPlayer(); };
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => { prev?.(); createPlayer(); };
 
         if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
           const s = document.createElement("script");

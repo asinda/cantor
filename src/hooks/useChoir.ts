@@ -36,7 +36,7 @@ export function useChoir(): ChoirData {
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState<string | null>(null);
 
-  async function fetch() {
+  async function refetch() {
     setLoading(true);
     setError(null);
     try {
@@ -46,14 +46,35 @@ export function useChoir(): ChoirData {
       setChoir(data.choir);
       setRole(data.role ?? null);
       setMembers(data.members ?? []);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { fetch(); }, []);
+  // Chargement initial : inline (pas d'appel à une fonction externe) pour que
+  // les mises à jour d'état restent bien des continuations après le "await",
+  // et non des appels synchrones dans le corps de l'effet.
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const res = await window.fetch("/api/choir");
+        const data = await res.json();
+        if (!active) return;
+        if (!res.ok) throw new Error(data.error);
+        setChoir(data.choir);
+        setRole(data.role ?? null);
+        setMembers(data.members ?? []);
+      } catch (e) {
+        if (active) setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
-  return { choir, role, members, loading, error, refetch: fetch };
+  return { choir, role, members, loading, error, refetch };
 }

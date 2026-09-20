@@ -1,4 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Choir } from "@/types";
+
+export type ChoirMembership = {
+  choir_id: string;
+  role: string;
+  voice: string | null;
+  choirs: Choir;
+};
 
 export async function getChoirByUser(userId: string) {
   const supabase = await createClient();
@@ -8,7 +16,7 @@ export async function getChoirByUser(userId: string) {
     .eq("user_id", userId)
     .limit(1)
     .single();
-  return data as any;
+  return data as ChoirMembership | null;
 }
 
 export async function getChoirMembers(choirId: string) {

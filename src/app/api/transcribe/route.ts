@@ -237,30 +237,6 @@ async function extractFromImage(buffer: Buffer, mimeType: string): Promise<strin
   }
 }
 
-// ── Sous-titres YouTube ────────────────────────────────────
-async function extractYoutubeTranscript(url: string): Promise<string> {
-  const videoId = url.match(/(?:v=|youtu\.be\/|embed\/)([^&\s?#]+)/)?.[1];
-  if (!videoId) throw new Error("URL YouTube invalide");
-
-  try {
-    const { YoutubeTranscript } = await import("youtube-transcript");
-
-    // Essayer en français d'abord
-    const segments = await YoutubeTranscript.fetchTranscript(videoId, { lang: "fr" })
-      .catch(() => YoutubeTranscript.fetchTranscript(videoId));
-
-    if (!segments || segments.length === 0)
-      throw new Error("Aucun sous-titre disponible. Activez les sous-titres automatiques YouTube.");
-
-    return segments.map((s: any) => s.text).join("\n");
-  } catch (e: any) {
-    throw new Error(
-      e.message?.includes("sous-titre") ? e.message :
-      "Impossible d'extraire les sous-titres. Vérifiez que la vidéo est publique avec sous-titres activés."
-    );
-  }
-}
-
 // ══ Handler principal ══════════════════════════════════════
 
 export async function POST(req: NextRequest) {
@@ -268,27 +244,6 @@ export async function POST(req: NextRequest) {
   if (!auth) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   try {
-    const contentType = req.headers.get("content-type") ?? "";
-    const isJson      = contentType.includes("application/json");
-
-    // ── JSON : YouTube URL ou transcription vocale ──
-    if (isJson) {
-      const body = await req.json().catch(() => ({}));
-
-      if (body.youtube_url) {
-        const rawText = await extractYoutubeTranscript(body.youtube_url);
-        const result  = await formatText(rawText);
-        return NextResponse.json({ ...result, source: "youtube" });
-      }
-
-      if (body.voice_transcript) {
-        const result = await formatText(body.voice_transcript);
-        return NextResponse.json({ ...result, source: "voice" });
-      }
-
-      return NextResponse.json({ error: "Corps JSON invalide" }, { status: 400 });
-    }
-
     // ── Multipart : fichier ──
     const formData = await req.formData();
     const file     = formData.get("file") as File | null;
