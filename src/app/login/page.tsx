@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import CantorIcon from "@/components/CantorIcon";
@@ -8,6 +8,14 @@ import { createClient } from "@/lib/supabase/client";
 const BG_IMAGE = "https://images.unsplash.com/photo-1638534958793-b198c7635575?w=1920&q=85&fit=crop";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "var(--bg)" }} />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [email,    setEmail]    = useState("");
