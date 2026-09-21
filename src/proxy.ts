@@ -28,7 +28,6 @@ export async function proxy(request: NextRequest) {
 
   /* ── Pages publiques (pas besoin d'être connecté) ── */
   const isPublic =
-    pathname === "/" ||                          // Landing page
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/onboarding") ||
@@ -46,7 +45,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user && pathname === "/") {
-    // Connecté sur la landing → dashboard
+    // Pas de page d'accueil : connecté → dashboard
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
