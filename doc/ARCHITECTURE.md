@@ -95,8 +95,7 @@ cantor/
 ├── proxy.ts n'existe qu'en src/proxy.ts (garde d'auth globale)
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx                  # Landing page publique
-│   │   ├── login/, register/         # Auth (email/mdp + OAuth Supabase)
+│   │   ├── login/, register/         # Auth (email/mdp + OAuth Supabase) — "/" redirige ici (pas de landing page)
 │   │   ├── onboarding/                # Créer / rejoindre une chorale
 │   │   ├── auth/callback/route.ts    # Échange code OAuth → session
 │   │   ├── (app)/                    # Groupe de routes protégées (layout partagé)
@@ -201,7 +200,7 @@ Toutes les tables ont `ENABLE ROW LEVEL SECURITY`, et pour les tables liées à 
 
 - **Isolation par chorale (RLS)** : chaque table métier restreint SELECT/INSERT/UPDATE/DELETE via une sous-requête sur `choir_members WHERE user_id = auth.uid()`. Un utilisateur ne peut jamais lire les données d'une chorale dont il n'est pas membre, même via l'API REST interne (les Route Handlers utilisent la session de l'utilisateur, pas une clé service).
 - **Actions réservées au chef** : les Server Actions de validation (`validateSongAction`, `rejectSongAction`) et la route `PATCH /api/choir` revérifient explicitement `membership.role === "chef"` côté serveur, en plus des policies RLS.
-- **Garde globale (`src/proxy.ts`)** : exécutée sur chaque requête (sauf assets statiques), elle lit la session via cookies SSR (`getSession()`, sans appel réseau) et redirige vers `/login` toute route non publique sans session. Liste blanche : `/`, `/login`, `/register`, `/onboarding`, `/auth/*`, `/api/*`, `/sw.js`, `/manifest.json`, `/favicon.svg`.
+- **Garde globale (`src/proxy.ts`)** : exécutée sur chaque requête (sauf assets statiques), elle lit la session via cookies SSR (`getSession()`, sans appel réseau) et redirige vers `/login` toute route non publique sans session. Liste blanche : `/login`, `/register`, `/onboarding`, `/auth/*`, `/api/*`, `/sw.js`, `/manifest.json`, `/favicon.svg` — `/` n'a plus de page (landing supprimée) et redirige systématiquement vers `/login` (non connecté) ou `/dashboard` (connecté).
 - **Vérification par requête** : `getAuthContext()` (pages, redirige si non connecté) et `getAuthContextForApi()` (API, renvoie 401) revalident systématiquement l'utilisateur — le proxy est une optimisation de redirection, pas la seule barrière (cf. recommandation officielle Next.js : *"Proxy should not be used as a full session management or authorization solution"*).
 - **Correctifs de sécurité déjà appliqués** (historique de commits) :
   - Garde d'authentification manquante sur `/api/transcribe` — corrigée (`getAuthContextForApi` désormais appelé en début de `POST`).
