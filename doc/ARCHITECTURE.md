@@ -1,6 +1,6 @@
 # Dossier d'architecture technique — Cantor
 
-> Application PWA de gestion chorale pour le Chœur Céleste. Ce document décrit l'état réel du code au **2026-09-20** (commit `6cfc026`). Il fait l'inventaire des fonctionnalités et documente l'architecture technique : stack, structure, modèle de données, sécurité et flux principaux.
+> Application PWA de gestion chorale, destinée à toute chorale (multi-tenant). Ce document décrit l'état réel du code au **2026-09-21** (commit `19a5e86`). Il fait l'inventaire des fonctionnalités et documente l'architecture technique : stack, structure, modèle de données, sécurité et flux principaux.
 
 ## Sommaire
 
@@ -137,7 +137,6 @@ erDiagram
   CHOIRS ||--o{ SONGS : possede
   CHOIRS ||--o{ REHEARSALS : planifie
   CHOIRS ||--o{ MASS_SHEETS : compose
-  CHOIRS ||--o| SUBSCRIPTIONS : souscrit
   CHOIRS ||--o{ NOTIFICATIONS : genere
   CHOIRS ||--o{ CHOIR_SONG_VERSIONS : personnalise
 
@@ -179,11 +178,6 @@ erDiagram
     text type
     bool read
   }
-  SUBSCRIPTIONS {
-    uuid choir_id
-    text plan "free, essential ou pro"
-    text status
-  }
 ```
 
 ### Détail des tables
@@ -199,7 +193,6 @@ erDiagram
 | `rehearsals` / `rehearsal_songs` | Répétitions et chants travaillés | `mastery` (0–100) |
 | `mass_sheets` / `mass_sheet_songs` | Feuilles de messe et programme | `moment` (temps liturgique), `position` |
 | `choir_song_versions` | Arrangement propre à une chorale | `custom_key`, `custom_tempo`, `is_official` |
-| `subscriptions` | Plan d'abonnement (voir §14) | `plan`, `status`, `stripe_id` (non utilisé actuellement) |
 | `notifications` *(migration 003)* | Notifications in-app | `type` (`song_submitted`/`song_validated`/`song_rejected`), `read` |
 
 Toutes les tables ont `ENABLE ROW LEVEL SECURITY`, et pour les tables liées à un chant, l'accès est dérivé via `songs.choir_id IN (choir_members du user)`.
@@ -362,7 +355,6 @@ Toutes les Server Actions revalident l'utilisateur (`supabase.auth.getUser()`) a
 | **Paramètres** | Nom / ville / logo / description de la chorale | ✅ Complet |
 | | Code d'invitation (affichage, copie, régénération) | ✅ Complet |
 | | Liste des membres (rôle, pupitre) | ✅ Complet |
-| **Abonnements** | Modèle de plans (`free`/`essential`/`pro`) + `isFeatureAllowed`/`getSongLimit` | ⚠️ **Scaffolding uniquement** : aucun flux de paiement (Stripe) ni page d'upgrade, `stripe_id` jamais renseigné |
 | **PWA** | Manifest installable, icône, raccourcis | ✅ Complet |
 | | Fonctionnement hors-ligne / cache | ❌ Non implémenté (service worker no-op, voir §14) |
 | **Sécurité** | RLS multi-tenant sur toutes les tables | ✅ Complet |
@@ -375,9 +367,9 @@ Toutes les Server Actions revalident l'utilisateur (`supabase.auth.getUser()`) a
 - **Aucune suite de tests automatisés** (pas de `jest`/`vitest`/`playwright` dans `package.json`) — toute vérification est manuelle actuellement.
 - ~~`next build` échouait~~ — **corrigé** (2026-09-20) : `/login` appelait `useSearchParams()` sans limite `<Suspense>`, ce qui faisait échouer le prerendering. Découvert en vérifiant le sprint ci-dessus (`npx tsc --noEmit` et `next dev` ne détectaient pas le problème, seul `next build` le révélait). Corrigé en extrayant le contenu de la page dans un composant `LoginForm` enveloppé par `<Suspense>` — c'était la seule page du projet utilisant `useSearchParams()`. `next build` passe désormais (23/23 pages générées).
 - **Service worker no-op** : `public/sw.js` se désinstalle immédiatement après activation. L'app est installable comme PWA mais n'offre aucune fonctionnalité hors-ligne malgré le nom "PWA".
-- **Abonnements non finalisés** : le modèle de données et la logique de feature-gating (`getPlan`, `isFeatureAllowed`, `getSongLimit`) existent, mais rien ne crée ni ne met à jour de ligne `subscriptions` (pas d'intégration Stripe malgré la colonne `stripe_id`).
 - **Panneau IA partiellement statique** : les boutons "Transposer" et "Analyser" dans `AIPanel.tsx` n'ont pas de gestionnaire d'événement — actions non implémentées.
 - **Pas de Supabase Storage détecté** : `score_url`/`audio_url`/`logo_url` sont de simples champs texte — aucun flux d'upload de fichier vers un bucket n'a été trouvé dans le code ; ces URLs doivent être renseignées manuellement (ou par un flux externe non présent dans ce repo).
+- **Table `subscriptions` orpheline en base** : le modèle d'abonnement (`plan`/`status`/`stripe_id`) et tout le code applicatif associé (`services/subscriptions.ts`, section Tarifs de la landing page) ont été retirés (2026-09-20) — jugés hors sujet pour l'outil. La table elle-même reste dans le schéma Postgres (non supprimée, pas de migration de suppression) mais n'est plus référencée par aucun code.
 - ~~Code orphelin dans `/api/transcribe`~~ — **corrigé** (2026-09-20) : les branches JSON `youtube_url`/`voice_transcript` et la dépendance `youtube-transcript` (jamais appelées par l'UI) ont été supprimées.
 - ~~Lint non propre~~ (`useChoir.ts`, `useSongs.ts`, `services/choirs.ts`, `MiniPlayer.tsx`) — **corrigé** (2026-09-20) : `any` remplacés par des types explicites (dont une déclaration locale minimale pour l'API YouTube IFrame dans `MiniPlayer.tsx`) ; le `setState` synchrone dans un effet a été résolu en inlinant le chargement initial dans l'effet (continuation après `await`) et en gardant `refetch()` séparé pour le rechargement manuel. `npm run lint` et `npx tsc --noEmit` sont propres sur ces 4 fichiers.
 - ~~Variable d'environnement `NEXTAUTH_URL`~~ — **corrigé** (2026-09-20) : renommée `NEXT_PUBLIC_APP_URL` dans `.env.local`/`.env.example` (confirmé non lue par le code, donc sans risque de régression).
