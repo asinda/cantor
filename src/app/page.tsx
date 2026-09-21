@@ -49,42 +49,6 @@ const FEATURES = [
   },
 ];
 
-const PLANS = [
-  {
-    name: "Gratuit",
-    price: "0 €",
-    period: "/ mois",
-    desc: "Pour découvrir Cantor",
-    color: "#9A7D5A",
-    features: ["Jusqu'à 50 chants", "1 chef de chœur", "Répétitions illimitées", "Feuilles de messe", "Export PDF"],
-    cta: "Commencer gratuitement",
-    href: "/register",
-    highlight: false,
-  },
-  {
-    name: "Essentiel",
-    price: "9 €",
-    period: "/ mois",
-    desc: "Pour les chorales actives",
-    color: "#A0621A",
-    features: ["Chants illimités", "Paroles multilingues", "Guides vocaux", "YouTube intégré", "Support email"],
-    cta: "Essayer 14 jours",
-    href: "/register",
-    highlight: true,
-  },
-  {
-    name: "Pro",
-    price: "19 €",
-    period: "/ mois",
-    desc: "Pour les grandes chorales",
-    color: "#4A7C59",
-    features: ["Tout l'Essentiel", "Plusieurs chefs", "API REST complète", "Priorité support", "Exportation avancée"],
-    cta: "Contacter",
-    href: "/contact",
-    highlight: false,
-  },
-];
-
 const TESTIMONIALS = [
   {
     name: "Sœur Marie-Claire",
@@ -166,7 +130,7 @@ export default function LandingPage() {
         </div>
 
         <p className="text-xs mt-4" style={{ color: "var(--text-3)" }}>
-          Gratuit jusqu'à 50 chants · Aucune carte requise
+          Aucune carte requise
         </p>
       </section>
 
@@ -177,7 +141,7 @@ export default function LandingPage() {
             Tout ce dont votre chorale a besoin
           </h2>
           <p className="text-sm" style={{ color: "var(--text-2)" }}>
-            De la gestion du répertoire à l'impression des feuilles de messe.
+            De la gestion du répertoire à l&apos;impression des feuilles de messe.
           </p>
         </div>
 
@@ -205,7 +169,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-2)" }}>
                 La plupart des outils de gestion musicale ignorent les réalités des chorales
-                liturgiques d'Afrique et de leur diaspora : plusieurs langues dans un même chant,
+                liturgiques d&apos;Afrique et de leur diaspora : plusieurs langues dans un même chant,
                 partage sur mobile, impression PDF pour les paroisses sans Wi-Fi.
               </p>
               <div className="space-y-3">
@@ -257,7 +221,7 @@ export default function LandingPage() {
       {/* ══ TÉMOIGNAGES ══ */}
       <section className="max-w-5xl mx-auto px-5 py-16">
         <h2 className="text-2xl font-bold text-center mb-10" style={{ color: "var(--text-1)" }}>
-          Ce qu'ils disent
+          Ce qu&apos;ils disent
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {TESTIMONIALS.map(({ name, role, text, stars }) => (
@@ -276,57 +240,6 @@ export default function LandingPage() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ══ TARIFS ══ */}
-      <section id="tarifs" style={{ background: "var(--surface)", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
-        <div className="max-w-5xl mx-auto px-5 py-16">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--text-1)" }}>Tarifs simples</h2>
-            <p className="text-sm" style={{ color: "var(--text-2)" }}>Commencez gratuitement, évoluez selon vos besoins.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {PLANS.map(({ name, price, period, desc, color, features, cta, href, highlight }) => (
-              <div key={name} className="card space-y-5 relative"
-                style={{
-                  borderColor: highlight ? color : "var(--border)",
-                  borderWidth: highlight ? 2 : 1,
-                }}>
-                {highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-bold px-3 py-1 rounded-full"
-                    style={{ background: color, color: "white" }}>
-                    Populaire
-                  </div>
-                )}
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide" style={{ color }}>{name}</p>
-                  <div className="flex items-baseline gap-1 mt-1">
-                    <span className="text-3xl font-black" style={{ color: "var(--text-1)" }}>{price}</span>
-                    <span className="text-sm" style={{ color: "var(--text-2)" }}>{period}</span>
-                  </div>
-                  <p className="text-xs mt-1" style={{ color: "var(--text-2)" }}>{desc}</p>
-                </div>
-                <div className="space-y-2">
-                  {features.map(f => (
-                    <div key={f} className="flex items-center gap-2">
-                      <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
-                      <span className="text-xs" style={{ color: "var(--text-1)" }}>{f}</span>
-                    </div>
-                  ))}
-                </div>
-                <Link href={href} className="btn w-full justify-center"
-                  style={{
-                    background: highlight ? color : "transparent",
-                    color: highlight ? "white" : color,
-                    border: `1px solid ${color}`,
-                    borderRadius: "0.625rem",
-                  }}>
-                  {cta}
-                </Link>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -352,7 +265,6 @@ export default function LandingPage() {
           <CantorIcon size={24} showText />
           <div className="flex gap-6">
             {[
-              ["#tarifs", "Tarifs"],
               ["/login", "Connexion"],
               ["/register", "Créer un compte"],
             ].map(([href, label]) => (

@@ -102,17 +102,6 @@ export type Choir = {
   created_at: string;
 };
 
-export type Subscription = {
-  id: string;
-  choir_id: string;
-  stripe_id: string | null;
-  plan: "free" | "essential" | "pro";
-  status: "active" | "past_due" | "canceled" | "trialing";
-  expires_at: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
 export type Song = {
   id: string;
   choir_id: string;
