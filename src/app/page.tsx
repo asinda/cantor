@@ -144,12 +144,12 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div>
               <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--text-1)" }}>
-                Conçu pour les chorales africaines et diaspora
+                Pensé pour les réalités d&apos;une chorale liturgique
               </h2>
               <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--text-2)" }}>
                 La plupart des outils de gestion musicale ignorent les réalités des chorales
-                liturgiques d&apos;Afrique et de leur diaspora : plusieurs langues dans un même chant,
-                partage sur mobile, impression PDF pour les paroisses sans Wi-Fi.
+                liturgiques : plusieurs langues dans un même chant, partage sur mobile,
+                impression PDF pour les paroisses sans Wi-Fi.
               </p>
               <div className="space-y-3">
                 {[
