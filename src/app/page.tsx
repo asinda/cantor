@@ -2,7 +2,7 @@ import Link from "next/link";
 import CantorIcon from "@/components/CantorIcon";
 import {
   Music, BookOpen, Calendar, Users, Globe, Mic2,
-  CheckCircle, ArrowRight, Star, Printer, PlayCircle
+  CheckCircle, ArrowRight, Printer, PlayCircle
 } from "lucide-react";
 
 /* ── Données ── */
@@ -46,27 +46,6 @@ const FEATURES = [
     icon: Users, color: "#4A4A8A", bg: "rgba(74,74,138,0.1)",
     title: "Gestion des membres",
     desc: "Invitez vos choristes avec un code unique. Gérez rôles et voix de chaque membre.",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: "Sœur Marie-Claire",
-    role: "Chef de chœur, Paroisse Saint-Jean",
-    text: "Cantor a transformé notre façon de préparer les messes. Plus besoin de photocopies — tout est sur les téléphones.",
-    stars: 5,
-  },
-  {
-    name: "Pasteur Emmanuel K.",
-    role: "Directeur musical, Église de la Grâce",
-    text: "Le support multilingue est extraordinaire pour notre communauté. FR, KI et SW dans le même chant !",
-    stars: 5,
-  },
-  {
-    name: "Jean-Baptiste M.",
-    role: "Chantre, Cathédrale de Kigali",
-    text: "Les guides vocaux m'ont aidé à apprendre ma partie soprano sans avoir besoin du piano.",
-    stars: 5,
   },
 ];
 
@@ -215,31 +194,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ══ TÉMOIGNAGES ══ */}
-      <section className="max-w-5xl mx-auto px-5 py-16">
-        <h2 className="text-2xl font-bold text-center mb-10" style={{ color: "var(--text-1)" }}>
-          Ce qu&apos;ils disent
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {TESTIMONIALS.map(({ name, role, text, stars }) => (
-            <div key={name} className="card space-y-3">
-              <div className="flex gap-0.5">
-                {Array.from({ length: stars }, (_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-current" style={{ color: "var(--gold)" }} />
-                ))}
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: "var(--text-1)" }}>
-                « {text} »
-              </p>
-              <div>
-                <p className="text-xs font-semibold" style={{ color: "var(--text-1)" }}>{name}</p>
-                <p className="text-xs" style={{ color: "var(--text-2)" }}>{role}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
