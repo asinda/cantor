@@ -11,19 +11,20 @@ export async function listSongs(choirId: string) {
 
 export async function listSongsFiltered(
   choirId: string,
-  filters: { q?: string; type?: string; diff?: string; status?: string }
+  filters: { q?: string; type?: string; diff?: string; status?: string; validation_status?: string }
 ) {
   const supabase = await createClient();
   let query = supabase
     .from("songs")
-    .select("id,title,liturgical_type,status,difficulty,key_signature,composer,languages,tempo_bpm")
+    .select("id,title,liturgical_type,status,difficulty,key_signature,composer,languages,tempo_bpm,validation_status")
     .eq("choir_id", choirId)
     .order("title");
 
-  if (filters.q)      query = query.ilike("title", `%${filters.q}%`);
-  if (filters.type)   query = query.eq("liturgical_type", filters.type);
-  if (filters.diff)   query = query.eq("difficulty", filters.diff);
-  if (filters.status) query = query.eq("status", filters.status);
+  if (filters.q)                query = query.ilike("title", `%${filters.q}%`);
+  if (filters.type)              query = query.eq("liturgical_type", filters.type);
+  if (filters.diff)               query = query.eq("difficulty", filters.diff);
+  if (filters.status)             query = query.eq("status", filters.status);
+  if (filters.validation_status)  query = query.eq("validation_status", filters.validation_status);
 
   return query;
 }
@@ -94,4 +95,64 @@ export async function getSongYoutubeLinks(songId: string) {
 export async function getVoiceGuides(songId: string) {
   const supabase = await createClient();
   return supabase.from("voice_guides").select("*").eq("song_id", songId).order("voice_part");
+}
+
+export type LyricsInput = { language: string; lyrics: string; phonetic?: string | null };
+export type YoutubeLinkInput = {
+  url: string; video_id: string; title: string; channel: string;
+  thumbnail?: string; version_type: string; is_primary: boolean;
+};
+export type VoiceGuideInput = {
+  voice_part: string; starting_note?: string | null;
+  entry_seconds?: number | null; instructions?: string | null;
+};
+
+export async function syncSongRelated(
+  songId: string,
+  lyrics: LyricsInput[],
+  youtubeLinks: YoutubeLinkInput[],
+  voiceGuides: VoiceGuideInput[]
+) {
+  const supabase = await createClient();
+
+  await supabase.from("song_lyrics").delete().eq("song_id", songId);
+  if (lyrics.length > 0) {
+    await supabase.from("song_lyrics").insert(lyrics.map((l) => ({ ...l, song_id: songId })));
+  }
+
+  await supabase.from("youtube_links").delete().eq("song_id", songId);
+  if (youtubeLinks.length > 0) {
+    await supabase.from("youtube_links").insert(youtubeLinks.map((l) => ({ ...l, song_id: songId })));
+  }
+
+  await supabase.from("voice_guides").delete().eq("song_id", songId);
+  if (voiceGuides.length > 0) {
+    await supabase.from("voice_guides").insert(voiceGuides.map((g) => ({ ...g, song_id: songId })));
+  }
+}
+
+export type FullSongPayload = {
+  title: string;
+  composer?: string | null;
+  liturgical_type?: string | null;
+  liturgical_season?: string | null;
+  key_signature?: string | null;
+  tempo_bpm?: number | null;
+  difficulty?: string | null;
+  status: string;
+  notes?: string | null;
+  languages: string[];
+  lyrics: LyricsInput[];
+  youtube_links: YoutubeLinkInput[];
+  voice_guides: VoiceGuideInput[];
+};
+
+export async function createFullSong(choirId: string, userId: string, payload: FullSongPayload) {
+  const { lyrics, youtube_links, voice_guides, ...songData } = payload;
+
+  const result = await createSong(choirId, userId, songData);
+  if (result.error || !result.data) return result;
+
+  await syncSongRelated(result.data.id, lyrics, youtube_links, voice_guides);
+  return result;
 }

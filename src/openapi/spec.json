@@ -85,6 +85,13 @@
       "get": {
         "tags": ["Chants"],
         "summary": "Lister les chants de la chorale",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Recherche par titre" },
+          { "name": "type", "in": "query", "schema": { "type": "string" }, "description": "Filtre par type liturgique" },
+          { "name": "diff", "in": "query", "schema": { "type": "string" }, "description": "Filtre par difficulté" },
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "description": "Filtre par statut d'apprentissage" },
+          { "name": "validation_status", "in": "query", "schema": { "type": "string" }, "description": "Filtre par statut de validation" }
+        ],
         "responses": {
           "200": { "description": "OK", "content": { "application/json": {
             "schema": { "type": "object", "properties": { "songs": { "type": "array", "items": { "$ref": "#/components/schemas/Song" } } } }
@@ -95,7 +102,23 @@
       "post": {
         "tags": ["Chants"],
         "summary": "Créer un chant (champs de base uniquement)",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Song" } } } },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  { "$ref": "#/components/schemas/Song" },
+                  { "type": "object", "properties": {
+                    "lyrics": { "type": "array", "items": { "type": "object", "properties": { "language": { "type": "string" }, "lyrics": { "type": "string" }, "phonetic": { "type": "string", "nullable": true } } } },
+                    "youtube_links": { "type": "array", "items": { "type": "object" } },
+                    "voice_guides": { "type": "array", "items": { "type": "object" } }
+                  } }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": { "description": "Créé", "content": { "application/json": { "schema": { "type": "object", "properties": { "song": { "$ref": "#/components/schemas/Song" } } } } } },
           "400": { "description": "Aucune chorale", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },

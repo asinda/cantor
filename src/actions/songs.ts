@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { deleteSong } from "@/services/songs";
+import { deleteSong, syncSongRelated } from "@/services/songs";
 import { redirect } from "next/navigation";
 
 type LyricsRow = {
@@ -60,7 +60,7 @@ export async function createSongAction(payload: SongPayload): Promise<{ id: stri
 
   if (songErr || !song) return { error: songErr?.message ?? "Erreur création chant" };
 
-  await syncRelated(supabase, song.id, lyrics, youtube_links, voice_guides);
+  await syncSongRelated(song.id, lyrics, youtube_links, voice_guides);
 
   revalidatePath("/chants");
   return { id: song.id };
@@ -79,40 +79,11 @@ export async function updateSongAction(
   const { error: songErr } = await supabase.from("songs").update(songData).eq("id", id);
   if (songErr) return { error: songErr.message };
 
-  await syncRelated(supabase, id, lyrics, youtube_links, voice_guides);
+  await syncSongRelated(id, lyrics, youtube_links, voice_guides);
 
   revalidatePath(`/chants/${id}`);
   revalidatePath("/chants");
   return { id };
-}
-
-async function syncRelated(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  songId: string,
-  lyrics: LyricsRow[],
-  youtubeLinks: YouTubeRow[],
-  voiceGuides: VoiceGuideRow[]
-) {
-  await supabase.from("song_lyrics").delete().eq("song_id", songId);
-  if (lyrics.length > 0) {
-    await supabase.from("song_lyrics").insert(
-      lyrics.map((l) => ({ ...l, song_id: songId }))
-    );
-  }
-
-  await supabase.from("youtube_links").delete().eq("song_id", songId);
-  if (youtubeLinks.length > 0) {
-    await supabase.from("youtube_links").insert(
-      youtubeLinks.map((l) => ({ ...l, song_id: songId }))
-    );
-  }
-
-  await supabase.from("voice_guides").delete().eq("song_id", songId);
-  if (voiceGuides.length > 0) {
-    await supabase.from("voice_guides").insert(
-      voiceGuides.map((g) => ({ ...g, song_id: songId }))
-    );
-  }
 }
 
 /** Sauvegarde uniquement les paroles d'un chant (sans toucher aux autres champs) */
