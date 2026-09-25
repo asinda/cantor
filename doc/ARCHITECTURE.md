@@ -265,6 +265,8 @@ La table `notifications` autorise en INSERT tout membre de la même chorale que 
 
 ## 9. Surface API interne
 
+Chaque feature dispose d'une doc dédiée dans `doc/features/*.md` (objectif, modèle de données, endpoints, règles métier, fichiers clés) ; l'ensemble des routes REST est aussi documenté par une spec OpenAPI (`src/openapi/spec.json`) explorable via la page Swagger UI interne **`/api-docs`** (protégée par la garde d'auth globale, voir §6).
+
 ### Route Handlers (`src/app/api/*`)
 
 | Route | Méthodes | Rôle |
