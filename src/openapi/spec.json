@@ -199,6 +199,26 @@
         "responses": { "201": { "description": "Créé" } }
       }
     },
+    "/api/repetitions/{id}": {
+      "get": {
+        "tags": ["Répétitions"],
+        "summary": "Détail d'une répétition (chants programmés inclus)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Introuvable" } }
+      },
+      "patch": {
+        "tags": ["Répétitions"],
+        "summary": "Modifier une répétition (remplace les chants si song_ids fourni)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "delete": {
+        "tags": ["Répétitions"],
+        "summary": "Supprimer une répétition",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
     "/api/messe": {
       "get": {
         "tags": ["Feuilles de messe"],
