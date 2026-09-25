@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/onboarding") ||
     pathname.startsWith("/auth") ||              // OAuth callback
     pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
+    pathname.startsWith("/api/") ||
     pathname === "/sw.js" ||
     pathname === "/manifest.json" ||
     pathname === "/favicon.svg";
