@@ -24,7 +24,8 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!auth) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { id } = await params;
-  const { song_ids, ...rehearsalData } = await req.json();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { song_ids, choir_id, ...rehearsalData } = await req.json();
 
   const { data, error } = await updateRehearsal(id, rehearsalData);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
