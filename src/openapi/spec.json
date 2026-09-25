@@ -1,0 +1,28 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Cantor — API interne",
+    "version": "1.0.0",
+    "description": "API REST interne de Cantor. Usage : documentation et maintenance, pas un accès public tiers. Authentification par cookie de session Supabase — connectez-vous via /login dans le même navigateur avant d'utiliser \"Try it out\"."
+  },
+  "servers": [{ "url": "/", "description": "Origine courante" }],
+  "security": [{ "cookieAuth": [] }],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sb-access-token",
+        "description": "Cookie httpOnly géré par Supabase Auth. Non manipulable depuis Swagger UI directement : connectez-vous via /login dans un autre onglet du même navigateur, le cookie suit automatiquement (requêtes same-origin)."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": { "error": { "type": "string" } },
+        "required": ["error"]
+      }
+    }
+  },
+  "paths": {}
+}
