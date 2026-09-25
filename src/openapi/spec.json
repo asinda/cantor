@@ -21,8 +21,180 @@
         "type": "object",
         "properties": { "error": { "type": "string" } },
         "required": ["error"]
+      },
+      "Song": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "composer": { "type": "string", "nullable": true },
+          "languages": { "type": "array", "items": { "type": "string" } },
+          "liturgical_type": { "type": "string", "nullable": true },
+          "liturgical_season": { "type": "string", "nullable": true },
+          "difficulty": { "type": "string", "nullable": true },
+          "key_signature": { "type": "string", "nullable": true },
+          "tempo_bpm": { "type": "integer", "nullable": true },
+          "status": { "type": "string", "enum": ["nouveau", "en_cours", "appris"] },
+          "validation_status": { "type": "string", "enum": ["brouillon", "en_attente", "validé", "rejeté"] }
+        }
+      },
+      "Rehearsal": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "date": { "type": "string", "format": "date" },
+          "time": { "type": "string", "nullable": true },
+          "location": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true }
+        }
+      },
+      "MassSheet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "date": { "type": "string", "format": "date", "nullable": true },
+          "liturgical_season": { "type": "string", "nullable": true },
+          "notes": { "type": "string", "nullable": true }
+        }
+      },
+      "Choir": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "city": { "type": "string", "nullable": true },
+          "invite_code": { "type": "string", "nullable": true }
+        }
       }
     }
   },
-  "paths": {}
+  "paths": {
+    "/api/chants": {
+      "get": {
+        "tags": ["Chants"],
+        "summary": "Lister les chants de la chorale",
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": {
+            "schema": { "type": "object", "properties": { "songs": { "type": "array", "items": { "$ref": "#/components/schemas/Song" } } } }
+          } } },
+          "401": { "description": "Non connecté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Chants"],
+        "summary": "Créer un chant (champs de base uniquement)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Song" } } } },
+        "responses": {
+          "201": { "description": "Créé", "content": { "application/json": { "schema": { "type": "object", "properties": { "song": { "$ref": "#/components/schemas/Song" } } } } } },
+          "400": { "description": "Aucune chorale", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Non connecté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/chants/{id}": {
+      "get": {
+        "tags": ["Chants"],
+        "summary": "Détail d'un chant (paroles, liens YouTube, guides voix inclus)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Introuvable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "patch": {
+        "tags": ["Chants"],
+        "summary": "Modifier un chant (champs de base + paroles/YouTube/guides voix en bloc)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "delete": {
+        "tags": ["Chants"],
+        "summary": "Supprimer un chant",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/repetitions": {
+      "get": {
+        "tags": ["Répétitions"],
+        "summary": "Lister les répétitions de la chorale",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "rehearsals": { "type": "array", "items": { "$ref": "#/components/schemas/Rehearsal" } } } } } } } }
+      },
+      "post": {
+        "tags": ["Répétitions"],
+        "summary": "Créer une répétition",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": {
+          "date": { "type": "string", "format": "date" },
+          "notes": { "type": "string" },
+          "song_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } }
+        }, "required": ["date"] } } } },
+        "responses": { "201": { "description": "Créé" } }
+      }
+    },
+    "/api/messe": {
+      "get": {
+        "tags": ["Feuilles de messe"],
+        "summary": "Lister les feuilles de messe de la chorale",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": { "sheets": { "type": "array", "items": { "$ref": "#/components/schemas/MassSheet" } } } } } } } }
+      },
+      "post": {
+        "tags": ["Feuilles de messe"],
+        "summary": "Créer une feuille de messe",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": {
+          "title": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "liturgical_season": { "type": "string" },
+          "notes": { "type": "string" },
+          "songs": { "type": "array", "items": { "type": "object", "properties": { "song_id": { "type": "string" }, "position": { "type": "integer" } } } }
+        }, "required": ["title"] } } } },
+        "responses": { "201": { "description": "Créé" } }
+      }
+    },
+    "/api/choir": {
+      "get": {
+        "tags": ["Chorale"],
+        "summary": "Infos de la chorale de l'utilisateur connecté, son rôle, et la liste des membres",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": {
+          "choir": { "$ref": "#/components/schemas/Choir" }, "role": { "type": "string" }, "members": { "type": "array" }
+        } } } } } }
+      },
+      "patch": {
+        "tags": ["Chorale"],
+        "summary": "Modifier les infos de la chorale, ou régénérer le code d'invitation (chef uniquement)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": {
+          "action": { "type": "string", "enum": ["regenerate_invite"], "description": "Omettre pour une mise à jour classique des champs" },
+          "name": { "type": "string" }, "city": { "type": "string" }, "description": { "type": "string" }
+        } } } } },
+        "responses": {
+          "200": { "description": "OK" },
+          "403": { "description": "Réservé au chef de chœur", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/youtube": {
+      "get": {
+        "tags": ["YouTube"],
+        "summary": "Résoudre une URL YouTube en métadonnées (titre, chaîne, miniature) via oEmbed",
+        "parameters": [{ "name": "url", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "description": "Paramètre manquant", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "URL invalide ou inaccessible", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/transcribe": {
+      "post": {
+        "tags": ["Transcription"],
+        "summary": "Extraire et structurer des paroles depuis un fichier (.docx, .pdf, image) via OCR/Claude",
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "properties": { "file": { "type": "string", "format": "binary" } } } } } },
+        "responses": {
+          "200": { "description": "OK — { lyrics, liturgical_type?, language?, source }" },
+          "401": { "description": "Non connecté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "415": { "description": "Format non supporté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  }
 }
