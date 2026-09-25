@@ -218,6 +218,26 @@
         "responses": { "201": { "description": "Créé" } }
       }
     },
+    "/api/messe/{id}": {
+      "get": {
+        "tags": ["Feuilles de messe"],
+        "summary": "Détail d'une feuille de messe (chants programmés inclus)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Introuvable" } }
+      },
+      "patch": {
+        "tags": ["Feuilles de messe"],
+        "summary": "Modifier une feuille de messe (remplace la liste des chants si fournie)",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "delete": {
+        "tags": ["Feuilles de messe"],
+        "summary": "Supprimer une feuille de messe",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
     "/api/choir": {
       "get": {
         "tags": ["Chorale"],
