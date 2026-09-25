@@ -66,6 +66,17 @@
           "city": { "type": "string", "nullable": true },
           "invite_code": { "type": "string", "nullable": true }
         }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "song_id": { "type": "string", "format": "uuid", "nullable": true },
+          "type": { "type": "string", "enum": ["song_submitted", "song_validated", "song_rejected"] },
+          "message": { "type": "string" },
+          "read": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
       }
     }
   },
@@ -227,6 +238,32 @@
           "401": { "description": "Non connecté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "415": { "description": "Format non supporté", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Lister mes notifications récentes + nombre non lues",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "object", "properties": {
+          "notifications": { "type": "array", "items": { "$ref": "#/components/schemas/Notification" } },
+          "unreadCount": { "type": "integer" }
+        } } } } } }
+      }
+    },
+    "/api/notifications/{id}": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Marquer une notification comme lue",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "properties": { "read": { "type": "boolean", "enum": [true] } }, "required": ["read"] } } } },
+        "responses": { "200": { "description": "OK" }, "400": { "description": "Seul { read: true } est supporté" } }
+      }
+    },
+    "/api/notifications/mark-all-read": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Marquer toutes mes notifications comme lues",
+        "responses": { "200": { "description": "OK" } }
       }
     }
   }
