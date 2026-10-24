@@ -53,7 +53,7 @@ export default function OnboardingPage() {
     const { data: choir, error: err } = await supabase
       .from("choirs")
       .select("id,name")
-      .eq("invite_code", code.trim().toLowerCase())
+      .ilike("invite_code", code.trim().replace(/[%_\\]/g, ""))
       .single();
 
     if (err || !choir) {
@@ -65,7 +65,8 @@ export default function OnboardingPage() {
       choir_id: choir.id, user_id: user.id, role: "choriste",
     });
 
-    if (joinErr) { setError(joinErr.message); setLoading(false); return; }
+        // 23505 = violation d'unicité : l'utilisateur est déjà membre de cette chorale
+    if (joinErr && joinErr.code !== "23505") { setError(joinErr.message); setLoading(false); return; }
     router.push("/dashboard");
   }
 

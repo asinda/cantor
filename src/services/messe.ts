@@ -69,3 +69,16 @@ export async function deleteMassSheet(id: string) {
   const supabase = await createClient();
   return supabase.from("mass_sheets").delete().eq("id", id);
 }
+
+/** Prochaine feuille de messe (date >= aujourd'hui, au format YYYY-MM-DD) */
+export async function getNextMassSheet(choirId: string, today: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("mass_sheets")
+    .select("id,title,date,liturgical_season")
+    .eq("choir_id", choirId)
+    .gte("date", today)
+    .order("date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+}

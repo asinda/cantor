@@ -40,6 +40,9 @@ export async function proxy(request: NextRequest) {
 
   /* ── Redirection selon état d'auth ── */
   if (!user && !isPublic) {
+    // Les Server Actions revérifient l'utilisateur elles-mêmes : une redirection
+    // leur renverrait du HTML ("An unexpected response was received from the server")
+    if (request.headers.has("next-action")) return response;
     // Non connecté → login
     return NextResponse.redirect(new URL("/login", request.url));
   }

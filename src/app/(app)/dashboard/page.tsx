@@ -5,9 +5,18 @@ import { getRecentMassSheets, countMassSheets } from "@/services/messe";
 import Link from "next/link";
 import { ChevronRight, Plus, Music, Calendar, BookOpen, ArrowRight } from "lucide-react";
 import { LITURGICAL_GRADIENTS } from "@/types";
+import ChoristeDashboard from "./ChoristeDashboard";
 
 export default async function DashboardPage() {
-  const { userName, choirId, choirName } = await getAuthContext();
+    const { userId, userName, choirId, choirName, role } = await getAuthContext();
+
+  // Les membres (hors chef) ont leur propre page d'accueil
+  if (choirId && role !== "chef") {
+    return (
+      <ChoristeDashboard userId={userId} choirId={choirId}
+        firstName={userName?.split(" ")[0] ?? null} choirName={choirName} />
+    );
+  }
 
   let songs: any[] = [], rehearsals: any[] = [], sheets: any[] = [];
   let songsTotal = 0, rehearsalsTotal = 0, sheetsTotal = 0;

@@ -7,6 +7,7 @@ export type AuthContext = {
   userName: string | null;
   choirId: string | null;
   choirName: string | null;
+  role: string | null;
 };
 
 /**
@@ -25,6 +26,7 @@ export async function getAuthContext(): Promise<AuthContext> {
     userName:  user.user_metadata?.full_name ?? null,
     choirId:   membership?.choir_id ?? null,
     choirName: membership?.choirs?.name ?? null,
+    role:      membership?.role ?? null,
   };
 }
 
@@ -42,5 +44,6 @@ export async function getAuthContextForApi(): Promise<AuthContext | null> {
     userName:  user.user_metadata?.full_name ?? null,
     choirId:   membership?.choir_id ?? null,
     choirName: membership?.choirs?.name ?? null,
+    role:      membership?.role ?? null,
   };
 }

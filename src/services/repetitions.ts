@@ -69,3 +69,16 @@ export async function deleteRehearsal(id: string) {
   const supabase = await createClient();
   return supabase.from("rehearsals").delete().eq("id", id);
 }
+
+/** Prochaine répétition (aujourd'hui inclus, date au format YYYY-MM-DD) */
+export async function getNextRehearsal(choirId: string, today: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("rehearsals")
+    .select("id,date,time,location")
+    .eq("choir_id", choirId)
+    .gte("date", today)
+    .order("date", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+}

@@ -21,7 +21,12 @@ export default function NotificationBell() {
   const ref = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
-    const result = await getMyNotificationsAction();
+    let result;
+    try {
+      result = await getMyNotificationsAction();
+    } catch {
+      return; // session expirée ou réseau coupé : on réessaiera au prochain poll
+    }
     if ("error" in result) return;
     setNotifications(result.notifications);
     setUnreadCount(result.unreadCount);

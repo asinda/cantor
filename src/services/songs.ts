@@ -156,3 +156,16 @@ export async function createFullSong(choirId: string, userId: string, payload: F
   await syncSongRelated(result.data.id, lyrics, youtube_links, voice_guides);
   return result;
 }
+
+/** Dernier chant validé de la chorale, mis en avant sur l'accueil */
+export async function getFeaturedSong(choirId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from("songs")
+    .select("id,title,liturgical_type,composer,key_signature")
+    .eq("choir_id", choirId)
+    .eq("validation_status", "validé")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+}
