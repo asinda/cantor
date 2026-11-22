@@ -59,6 +59,34 @@
 @theme inline {
   --color-background: var(--bg);
   --color-foreground: var(--text-1);
+
+  /* ── Polices (chargées par next/font dans app/layout.tsx) ── */
+  --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+  --font-script:  var(--font-caveat), cursive;
+}
+
+/* ════════════════════════════════════════════
+   Palette « Accueil » (dashboard V1) — classes Tailwind
+   bg-navy, text-ink-muted, bg-ok-soft…
+════════════════════════════════════════════ */
+@theme {
+  --color-navy:      #14233F;
+  --color-navy-2:    #1F3358;
+  --color-sun:       #F2C14E;
+  --color-sun-soft:  #FDF3D6;
+  --color-sun-ink:   #8A5A00;
+  --color-ink:       #14233F;
+  --color-ink-muted: #5B6577;
+  --color-line:      #E3E7EE;
+  --color-line-soft: #EDF0F4;
+  --color-canvas:    #F3F5F8;
+  --color-ok:        #157F3D;
+  --color-ok-soft:   #E4F4E9;
+  --color-ko:        #B42318;
+  --color-ko-soft:   #FDE7E4;
+  --color-info:      #1E55B3;
+  --color-info-soft: #E4ECFB;
+  --color-warn-ink:  #B54708;
 }
 
 * { box-sizing: border-box; }

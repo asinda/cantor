@@ -169,3 +169,15 @@ export async function getFeaturedSong(choirId: string) {
     .limit(1)
     .maybeSingle();
 }
+
+/** Derniers chants validés de la chorale (aperçu du catalogue sur l'accueil) */
+export async function getLatestValidatedSongs(choirId: string, limit = 4) {
+  const supabase = await createClient();
+  return supabase
+    .from("songs")
+    .select("id,title,liturgical_type,liturgical_season")
+    .eq("choir_id", choirId)
+    .eq("validation_status", "validé")
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+}
