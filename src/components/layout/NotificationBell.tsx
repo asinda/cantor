@@ -13,7 +13,9 @@ import type { Notification } from "@/types";
 
 const POLL_MS = 60_000;
 
-export default function NotificationBell() {
+/** `large` : bouton rond de l'en-tête de l'accueil ; `default` : barre du haut / latérale */
+export default function NotificationBell({ variant = "default" }: { variant?: "default" | "large" }) {
+  const large = variant === "large";
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -72,11 +74,16 @@ export default function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={handleOpen}
-        className="relative w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/6"
-        style={{ color: "var(--text-3)" }}
-        title="Notifications"
+        className={
+          large
+            ? "relative flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-navy shadow-[0_1px_2px_rgba(20,35,63,0.06),0_8px_20px_-10px_rgba(20,35,63,0.18)] transition-colors hover:bg-tray"
+            : "relative w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-black/6"
+        }
+        style={large ? undefined : { color: "var(--text-3)" }}
+        title="Annonces et notifications"
+        aria-label="Annonces et notifications"
       >
-        <Bell className="w-3.5 h-3.5" />
+        <Bell className={large ? "h-5 w-5" : "w-3.5 h-3.5"} strokeWidth={large ? 2.2 : 2} />
         {unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 flex items-center justify-center rounded-full text-[10px] font-bold text-white"

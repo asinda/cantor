@@ -1,51 +1,48 @@
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import type { DashboardChoirLife } from "@/types/dashboard";
-import { formatDayMonth } from "./format";
+import { cn } from "@/lib/utils";
 import { DashCard, MaybeLink, btn } from "./ui";
 
 export default function ChoirLifeBanner({ data }: { data: DashboardChoirLife }) {
   const [main, ...others] = data.photos;
 
   return (
-    <DashCard aria-labelledby="vie-title" className="grid overflow-hidden rounded-3xl md:grid-cols-2">
-      {/* Mosaïque : 1 grande photo + 2 petites */}
-      <div className="grid min-h-[260px] grid-cols-3 grid-rows-2 gap-1.5 p-1.5 md:min-h-[340px]">
+    <DashCard aria-labelledby="vie-title" className="grid overflow-hidden md:grid-cols-[1.05fr_1fr] md:rounded-[20px]">
+      {/* Mosaïque : 1 grande photo à gauche + 2 empilées (mobile : 3 en bande) */}
+      <div className="grid h-[110px] grid-cols-[1.4fr_1fr_1fr] gap-1 p-1 md:h-[350px] md:grid-cols-[1.4fr_1fr] md:grid-rows-2 md:gap-1.5 md:p-1.5">
         {main && (
-          <figure className="relative col-span-2 row-span-2 m-0 overflow-hidden rounded-[18px]">
-            <Image src={main.src} alt={main.alt} fill sizes="(min-width: 768px) 33vw, 66vw" className="object-cover" />
-            <figcaption className="absolute bottom-2.5 left-2.5 rounded-full bg-navy/80 px-2.5 py-1 text-xs font-semibold text-white">
-              {main.caption}
-            </figcaption>
-          </figure>
+          <div className="relative overflow-hidden rounded-[10px] md:row-span-2 md:rounded-[14px]">
+            <Image src={main.src} alt={main.alt} fill sizes="(min-width: 768px) 30vw, 40vw" className="object-cover" />
+          </div>
         )}
         {others.slice(0, 2).map((p) => (
-          <figure key={p.src} className="relative m-0 overflow-hidden rounded-[14px]">
-            <Image src={p.src} alt={p.alt} fill sizes="(min-width: 768px) 16vw, 33vw" className="object-cover" />
-            <figcaption className="absolute bottom-2 left-2 rounded-full bg-navy/80 px-2 py-0.5 text-[11px] font-semibold text-white">
-              {p.caption}
-            </figcaption>
-          </figure>
+          <div key={p.src} className="relative overflow-hidden rounded-[10px] md:rounded-[14px]">
+            <Image src={p.src} alt={p.alt} fill sizes="(min-width: 768px) 20vw, 30vw" className="object-cover" />
+          </div>
         ))}
       </div>
 
-      <div className="flex flex-col justify-center gap-3.5 p-6 md:p-10">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-sun-ink">Vie chorale</p>
-        <h2 id="vie-title" className="font-display text-2xl font-extrabold leading-tight tracking-tight md:text-3xl">
+      <div className="flex flex-col justify-center gap-2.5 bg-gradient-to-br from-[#FFFBEF] to-white to-70% p-4 md:gap-3 md:px-10 md:py-8">
+        <p className="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-[0.06em] text-sun-ink md:text-xs">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sun-soft md:h-7 md:w-7">
+            <Heart className="h-3.5 w-3.5 md:h-[15px] md:w-[15px]" strokeWidth={2.4} aria-hidden />
+          </span>
+          Vie chorale
+        </p>
+        <h2 id="vie-title" className="font-display text-lg font-extrabold leading-tight md:text-[28px]">
           {data.title}
         </h2>
-        <p className="text-[15px] leading-relaxed text-ink-muted">{data.description}</p>
-        {data.upcoming.length > 0 && (
-          <ul className="flex flex-wrap gap-2" aria-label="Prochains rendez-vous">
-            {data.upcoming.map((e) => (
-              <li key={e.label} className="rounded-full bg-canvas px-3 py-1.5 text-[13px]">
-                {e.label} · {formatDayMonth(e.date)}
-              </li>
-            ))}
-          </ul>
-        )}
-        <MaybeLink href={data.href} className={`${btn.primary} mt-1.5 min-h-12 self-start px-6 text-[15px]`}>
-          Découvrir <ArrowRight className="h-[18px] w-[18px]" aria-hidden />
+        <p className="hidden text-[15px] font-medium leading-relaxed text-ink-muted md:block">{data.description}</p>
+        <ul className="flex flex-wrap gap-1.5 md:gap-2" aria-label="Moments partagés">
+          {data.tags.map((t) => (
+            <li key={t} className="rounded-full border border-line bg-white px-2.5 py-0.5 text-[11px] font-bold md:px-3 md:py-1 md:text-xs">
+              {t}
+            </li>
+          ))}
+        </ul>
+        <MaybeLink href={data.href} className={cn(btn.outlineNavy, "mt-1 self-start")}>
+          Découvrir <ArrowRight className="h-4 w-4" aria-hidden />
         </MaybeLink>
       </div>
     </DashCard>

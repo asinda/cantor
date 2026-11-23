@@ -1,14 +1,14 @@
 import Image from "next/image";
 import { BookOpen, CalendarDays, Clock, MapPin } from "lucide-react";
 import type { DashboardMass } from "@/types/dashboard";
-import { formatLongDay, formatTime } from "./format";
+import { formatCountdown, formatLongDay, formatTime } from "./format";
 import { MaybeLink, btn } from "./ui";
 
 export default function MassHero({ mass }: { mass: DashboardMass | null }) {
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative flex min-h-[340px] items-end overflow-hidden rounded-3xl bg-navy text-white md:min-h-[400px] md:items-center"
+      className="relative flex min-h-[230px] items-end overflow-hidden rounded-[18px] bg-navy text-white md:min-h-[320px] md:items-center md:rounded-[20px]"
     >
       <Image
         src="/images/dashboard/hero-chorale.png"
@@ -29,15 +29,17 @@ export default function MassHero({ mass }: { mass: DashboardMass | null }) {
         }}
       />
 
-      <div className="relative flex max-w-[640px] flex-col gap-3 p-6 md:p-12">
-        <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-sun">La prochaine messe</p>
+      <div className="relative flex max-w-[640px] flex-col gap-2 p-5 md:gap-3 md:p-11">
+        <p className="text-xs font-extrabold uppercase tracking-[0.12em] text-sun md:text-[13px]">
+          La prochaine messe{mass && ` · ${formatCountdown(mass.date)}`}
+        </p>
 
         {mass ? (
           <>
-            <h1 id="hero-title" className="font-display text-3xl font-extrabold leading-tight tracking-tight md:text-[44px]">
+            <h1 id="hero-title" className="font-display text-[26px] font-extrabold leading-tight tracking-tight md:text-[38px]">
               {formatLongDay(mass.date)}
             </h1>
-            <p className="text-[17px] text-[#D5DBE6]">{mass.title}</p>
+            <p className="text-[15px] font-semibold text-[#D5DBE6] md:text-base">{mass.title}</p>
 
             <div className="mt-1 flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
               {mass.location && (
@@ -54,8 +56,8 @@ export default function MassHero({ mass }: { mass: DashboardMass | null }) {
               )}
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-3">
-              <MaybeLink href={mass.sheetHref} className={`${btn.accent} min-h-12 px-[22px] text-[15px]`}>
+            <div className="mt-2 flex flex-wrap gap-2.5 md:mt-3">
+              <MaybeLink href={mass.sheetHref} className={btn.accent}>
                 <BookOpen className="h-[18px] w-[18px]" aria-hidden /> Voir la feuille de messe
               </MaybeLink>
               <MaybeLink href={mass.calendarHref} className={btn.outlineLight}>
@@ -65,7 +67,7 @@ export default function MassHero({ mass }: { mass: DashboardMass | null }) {
           </>
         ) : (
           <>
-            <h1 id="hero-title" className="font-display text-3xl font-extrabold md:text-[40px]">
+            <h1 id="hero-title" className="font-display text-[26px] font-extrabold md:text-[36px]">
               Aucune messe programmée
             </h1>
             <p className="text-[#D5DBE6]">La prochaine feuille de messe apparaîtra ici dès qu’elle sera publiée.</p>

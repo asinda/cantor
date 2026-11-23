@@ -4,32 +4,36 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DashboardHref } from "@/types/dashboard";
 
+/** Ombre douce commune aux cartes : elles se détachent du fond `canvas` */
+export const cardShadow = "shadow-[0_1px_2px_rgba(20,35,63,0.06),0_8px_20px_-10px_rgba(20,35,63,0.18)]";
+
 /** Carte blanche standard du dashboard */
 export function DashCard({ className, ...props }: ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-[20px] border border-line bg-white text-ink", className)}
+      className={cn("rounded-[18px] border border-line bg-white text-ink", cardShadow, className)}
       {...props}
     />
   );
 }
 
-/** En-tête de carte : pastille icône + titre + élément à droite (badge, compteur…) */
-export function CardHeader({
-  id, icon: Icon, title, iconClassName, right,
+/** Titre de carte : pastille icône + titre + élément à droite (bouton…) */
+export function CardTitle({
+  id, icon: Icon, title, iconClassName, right, className,
 }: {
   id: string;
   icon: LucideIcon;
   title: string;
   iconClassName: string;
   right?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className={cn("flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl", iconClassName)}>
-        <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
+    <div className={cn("flex items-center gap-3", className)}>
+      <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]", iconClassName)}>
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} aria-hidden />
       </span>
-      <h2 id={id} className="flex-1 font-display text-lg font-bold">{title}</h2>
+      <h2 id={id} className="min-w-0 flex-1 truncate font-display text-base font-extrabold md:text-lg">{title}</h2>
       {right}
     </div>
   );
@@ -58,13 +62,18 @@ export function MaybeLink({
 
 /** Styles de boutons partagés */
 export const btn = {
-  primary:
-    "inline-flex min-h-11 items-center gap-2 rounded-full bg-navy px-5 text-sm font-semibold text-white transition-colors hover:bg-navy-2",
+  /** Bouton plein bleu nuit, coins arrondis (pas pilule) */
+  navy:
+    "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-navy px-5 text-sm font-bold text-white shadow-[0_4px_12px_-4px_rgba(20,35,63,0.5)] transition-colors hover:bg-navy-2",
+  /** Bouton plein jaune (sur fond bleu nuit) */
   accent:
-    "inline-flex min-h-11 items-center gap-2 rounded-full bg-sun px-5 text-sm font-semibold text-navy transition-colors hover:bg-[#E8B43A]",
-  secondary:
-    "inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-white px-5 text-sm font-semibold text-ink transition-colors hover:bg-canvas",
+    "inline-flex min-h-11 items-center gap-2 rounded-full bg-sun px-5 text-sm font-bold text-navy transition-colors hover:bg-[#E8B43A]",
+  /** Contour blanc (sur fond bleu nuit) */
   outlineLight:
-    "inline-flex min-h-12 items-center gap-2.5 rounded-full border-[1.5px] border-white/70 px-5 text-[15px] font-semibold text-white transition-colors hover:bg-white/10",
-  link: "inline-flex items-center gap-1.5 text-sm font-semibold text-ink underline-offset-4 hover:underline",
+    "inline-flex min-h-11 items-center gap-2 rounded-full border-[1.5px] border-white/70 px-5 text-sm font-bold text-white transition-colors hover:bg-white/10",
+  /** Contour bleu nuit (sur fond clair) */
+  outlineNavy:
+    "inline-flex min-h-11 items-center gap-2 rounded-xl border-[1.5px] border-navy px-5 text-sm font-extrabold text-navy transition-colors hover:bg-navy/5",
+  /** Lien texte */
+  link: "inline-flex items-center gap-1.5 text-sm font-extrabold text-navy underline-offset-4 hover:underline",
 };

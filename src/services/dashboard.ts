@@ -1,4 +1,4 @@
-import type { DashboardData } from "@/types/dashboard";
+import type { DashboardData, SeasonTone } from "@/types/dashboard";
 import { getNextMassSheet } from "@/services/messe";
 import { getNextRehearsal } from "@/services/repetitions";
 import { getLatestValidatedSongs } from "@/services/songs";
@@ -16,11 +16,17 @@ const capitalize = (s: string | null) => (s ? s.charAt(0).toUpperCase() + s.slic
 /** "14:00:00" (colonne TIME) → "14:00" */
 const hhmm = (time: string | null) => (time ? time.slice(0, 5) : null);
 
+/** Couleur liturgique de chaque temps (valeurs de LITURGICAL_SEASONS) */
+const SEASON_TONES: Record<string, SeasonTone> = {
+  "avent": "violet",
+  "carême": "violet",
+  "noël": "gold",
+  "pâques": "gold",
+  "temps ordinaire": "green",
+};
+
 /**
  * Point d'entrée UNIQUE des données de l'accueil.
- *
- * Les sections sans table en base (annonces, présences, contribution, événements)
- * renvoient un état vide : les cartes affichent leur message « aucun… ».
  * Chaque nouvelle fonctionnalité se branche ici, sans toucher aux composants.
  */
 export async function getDashboardData(ctx: DashboardContext): Promise<DashboardData> {
@@ -29,7 +35,7 @@ export async function getDashboardData(ctx: DashboardContext): Promise<Dashboard
   const [massRes, rehearsalRes, songsRes] = await Promise.all([
     getNextMassSheet(ctx.choirId, today),
     getNextRehearsal(ctx.choirId, today),
-    getLatestValidatedSongs(ctx.choirId, 4),
+    getLatestValidatedSongs(ctx.choirId, 7),
   ]);
 
   const mass = massRes.data;
@@ -52,47 +58,40 @@ export async function getDashboardData(ctx: DashboardContext): Promise<Dashboard
         }
       : null,
 
-    announcements: { items: [], allHref: null },   // TODO: table announcements (à créer)
-    attendance: null,                              // TODO: table attendances (à créer, appel par le chantre)
-    contribution: null,                            // TODO: table contributions (à créer)
-
     songs: {
       allHref: "/chants",
-      proposeHref: "/chants/nouveau",
+      addHref: "/chants/nouveau",
       items: (songsRes.data ?? []).map((s) => ({
         id: s.id,
         title: s.title,
         category: capitalize(s.liturgical_type),
-        audience: capitalize(s.liturgical_season),
-        duration: null, // pas de colonne durée sur songs
+        season: capitalize(s.liturgical_season),
+        seasonTone: SEASON_TONES[s.liturgical_season ?? ""] ?? "neutral",
+        addedAt: s.created_at,
         href: `/chants/${s.id}`,
       })),
     },
 
-    // rehearsals n'a pas d'heure de fin
     nextRehearsal: rehearsal
       ? {
           date: rehearsal.date,
           startTime: hhmm(rehearsal.time),
-          endTime: null,
           location: rehearsal.location,
-          note: null,
           href: `/repetitions/${rehearsal.id}`,
         }
       : null,
 
     // Texte et photos de présentation (statiques) ; les rendez-vous viendront d'une table events
     choirLife: {
-      title: "Plus qu’une chorale, une famille",
-      description:
-        "Revivez nos grands moments : sorties, concerts, fêtes et pèlerinages. Photos, souvenirs et prochains rendez-vous, tout est ici.",
-      upcoming: [], // TODO: table events (à créer)
+      title: "Plus qu’un chœur, une famille",
+      description: "Sorties, fêtes, anniversaires : les moments partagés en dehors des messes.",
+      tags: ["Fêtes", "Sorties", "Anniversaires", "Retraites"],
       photos: [
-        { src: "/images/dashboard/choristes-livrets.png", alt: "Choristes chantant avec leurs livrets", caption: "Concerts" },
-        { src: "/images/dashboard/eglise-coucher-soleil.png", alt: "Église au coucher du soleil", caption: "Sorties" },
-        { src: "/images/dashboard/bougie-croix.png", alt: "Bougie allumée près d’une croix", caption: "Célébrations" },
+        { src: "/images/dashboard/choristes-livrets.png", alt: "Choristes chantant avec leurs livrets" },
+        { src: "/images/dashboard/eglise-coucher-soleil.png", alt: "Église au coucher du soleil" },
+        { src: "/images/dashboard/bougie-croix.png", alt: "Bougie allumée près d’une croix" },
       ],
-      href: null,
+      href: null, // page Vie chorale pas encore développée
     },
   };
 }

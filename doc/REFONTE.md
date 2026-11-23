@@ -51,6 +51,45 @@
 
 À noter : la carte « Notifications » de l'ancien accueil disparaît ; les notifications restent accessibles par la cloche (barre du haut / latérale).
 
+### V2 (2026-11-23) — maquette validée en PDF (`maquette-accueil-v2.pdf`)
+
+**Existant (V1)** : grandes cartes Annonces / Présences / Contribution, bannière de 400 px, raccourcis chef Chant / Feuille / Répétition dans l'en-tête, 4 chants validés (tri par modification).
+
+**Décisions**
+- ✅ Tout plus compact sur mobile ; plus aéré sur ordinateur (on fait défiler).
+- ✅ Les 3 cartes deviennent **3 tuiles : Présences · Contributions · Pupitre** (pupitre = équipe de même voix), avec un bouton bleu « Ouvrir → » **sans lien pour l'instant**.
+- ✅ Les **Annonces** passent dans la **cloche** de l'en-tête ; à côté, une **icône profil**.
+- ✅ Chef : plus de raccourcis Chant / Feuille / Répétition dans l'en-tête (Feuille et Répétition restent dans la barre latérale).
+- ✅ Bouton bleu **« + Chant »** en haut à droite de la carte Catalogue.
+- ✅ Catalogue : **7 derniers chants validés** (tri par **date de création**), 3 visibles + défilement intérieur, étiquettes type (bleu) et temps liturgique (dans sa couleur), sans liseré.
+- ✅ Répétition : carte **bleu nuit, textes blancs**, photo en haut, date en petit calendrier.
+- ✅ Vie chorale : mosaïque de photos, étiquettes **sans emoji**, bouton « Découvrir ».
+- ✅ Fond de page plus sombre (`canvas` #E4E8EF), ombres douces, textes plus gras, gris secondaire plus foncé (`ink-muted` #4A5468).
+
+**Réglages par défaut pris en codant (questions restées sans réponse — à confirmer)**
+- « + Chant » visible par **tous les rôles** : `/chants/nouveau` n'est pas réservé au chef et un chant proposé passe par la validation.
+- Icône profil **sans lien** (la page profil n'existe pas ; « Paramètres » concerne la chorale).
+- **Anciennes cloches conservées** (barre du haut mobile + barre latérale) : sur mobile, deux cloches sont visibles sur l'accueil.
+- Petit texte gris sous le nom des tuiles **gardé** (masqué sur très petit écran).
+
+**Changements**
+| Fichier | Changement |
+|---|---|
+| `dashboard/AccueilDashboard.tsx` | En-tête cloche + profil, tuiles, fond `canvas` pleine largeur ; prop `isChef` supprimée |
+| `dashboard/page.tsx` | Plus de `isChef` |
+| `components/dashboard/QuickTiles.tsx` | Nouveau : tuiles Présences / Contributions / Pupitre |
+| `components/dashboard/AnnouncementsCard.tsx`, `AttendanceCard.tsx`, `ContributionCard.tsx` | Supprimés |
+| `components/dashboard/SongCatalogCard.tsx` | « + Chant », 7 chants, bac défilant, étiquettes de couleur |
+| `components/dashboard/RehearsalCard.tsx` | Carte bleu nuit, photo, petit calendrier |
+| `components/dashboard/ChoirLifeBanner.tsx` | Mosaïque, étiquettes, bouton contour |
+| `components/dashboard/MassHero.tsx` | 230 px mobile / 320 px ordinateur, compte à rebours dans le surtitre |
+| `components/dashboard/QuoteBanner.tsx` | Bandeau plus fin |
+| `components/dashboard/ui.tsx` | `cardShadow`, `CardTitle`, boutons `navy` / `outlineNavy` |
+| `components/layout/NotificationBell.tsx` | Variante `large` (bouton rond de l'accueil) ; comportement inchangé |
+| `services/dashboard.ts`, `types/dashboard.ts` | Données annonces / présences / contribution retirées ; `seasonTone`, `addedAt`, `tags` |
+| `services/songs.ts` | `getLatestValidatedSongs` : 7 par défaut, tri par `created_at` |
+| `app/globals.css` | `canvas` et `ink-muted` assombris ; nouveaux `amethyst`, `amethyst-soft`, `tray` |
+
 ---
 
 ## À faire plus tard
@@ -59,6 +98,8 @@
 - [ ] **Migrations pour compléter l'accueil** : `mass_sheets` (heure, lieu, heure de rendez-vous), `rehearsals` (heure de fin), `songs` (durée).
 - [ ] **Fonctionnalités à créer** (migration + RLS + service + page + branchement dans `getDashboardData()`) : Annonces → Présences (appel par le chantre) → Contributions → Vie chorale / événements.
 - [ ] **Cohérence visuelle** : l'accueil est en bleu nuit/jaune, le reste de l'app en crème/or « Partition » — décider de la migration du reste de l'app.
+- [ ] **Brancher les tuiles** Présences / Contributions / Pupitre et l'**icône profil** quand les pages existeront (pupitre : enregistrer la voix de chaque membre en base).
+- [ ] **Cloches en double** sur l'accueil mobile (barre du haut + en-tête) : décider si on retire les anciennes.
 - [ ] **Liens grisés « Bientôt disponible »** sur l'accueil (Toutes les annonces, Historique, Mes engagements, Découvrir…) — revoir l'UX (masquer plutôt que griser ?).
 - [ ] **Images** : remplacer les images générées par de vraies photos de la chorale, en ≥ 1200 px.
 - [ ] **Fonctions de service devenues inutilisées** avec le nouvel accueil — à supprimer : `getFeaturedSong`, `getRecentSongs`, `countSongs` (`services/songs.ts`), `getRecentRehearsals`, `countRehearsals` (`services/repetitions.ts`), `getRecentMassSheets`, `countMassSheets` (`services/messe.ts`).

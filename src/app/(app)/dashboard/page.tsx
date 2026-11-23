@@ -4,12 +4,12 @@ import { Plus, Music } from "lucide-react";
 import AccueilDashboard from "./AccueilDashboard";
 
 export default async function DashboardPage() {
-  const { userId, userName, choirId, choirName, role } = await getAuthContext();
+  const { userId, userName, choirId, choirName } = await getAuthContext();
 
-  // Même accueil pour tous les rôles ; le chef y a en plus ses raccourcis de création
+  // Même accueil pour tous les rôles
   if (choirId) {
     return (
-      <AccueilDashboard userId={userId} choirId={choirId} isChef={role === "chef"}
+      <AccueilDashboard userId={userId} choirId={choirId}
         firstName={userName?.split(" ")[0] ?? null} choirName={choirName} />
     );
   }

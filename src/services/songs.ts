@@ -171,13 +171,14 @@ export async function getFeaturedSong(choirId: string) {
 }
 
 /** Derniers chants validés de la chorale (aperçu du catalogue sur l'accueil) */
-export async function getLatestValidatedSongs(choirId: string, limit = 4) {
+/** Derniers chants validés AJOUTÉS (tri par date de création, pas de modification) */
+export async function getLatestValidatedSongs(choirId: string, limit = 7) {
   const supabase = await createClient();
   return supabase
     .from("songs")
-    .select("id,title,liturgical_type,liturgical_season")
+    .select("id,title,liturgical_type,liturgical_season,created_at")
     .eq("choir_id", choirId)
     .eq("validation_status", "validé")
-    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
 }

@@ -6,8 +6,8 @@ import { Music } from "lucide-react";
  */
 export default function QuoteBanner() {
   return (
-    <figure className="relative m-0 flex min-h-[140px] items-center overflow-hidden rounded-[20px] bg-[#0B2840] px-8 py-6 md:px-14">
-      <blockquote className="relative m-0 font-script text-[28px] leading-tight text-white md:text-[36px]">
+    <figure className="relative m-0 flex min-h-[110px] items-center overflow-hidden rounded-[18px] bg-navy px-6 py-5 md:min-h-[130px] md:rounded-[20px] md:px-14">
+      <blockquote className="relative m-0 font-script text-[24px] leading-tight text-white md:text-[32px]">
         <p className="m-0 -rotate-3">Chanter ensemble,<br />c’est prier deux fois.</p>
         <span aria-hidden className="mt-2 block h-[3px] w-24 -rotate-3 rounded-full bg-sun/80" />
       </blockquote>

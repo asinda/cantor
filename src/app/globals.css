@@ -76,10 +76,10 @@
   --color-sun-soft:  #FDF3D6;
   --color-sun-ink:   #8A5A00;
   --color-ink:       #14233F;
-  --color-ink-muted: #5B6577;
+  --color-ink-muted: #4A5468;
   --color-line:      #E3E7EE;
   --color-line-soft: #EDF0F4;
-  --color-canvas:    #F3F5F8;
+  --color-canvas:    #E4E8EF;
   --color-ok:        #157F3D;
   --color-ok-soft:   #E4F4E9;
   --color-ko:        #B42318;
@@ -87,6 +87,9 @@
   --color-info:      #1E55B3;
   --color-info-soft: #E4ECFB;
   --color-warn-ink:  #B54708;
+  --color-amethyst:  #6D3FC0;
+  --color-amethyst-soft: #EFE8FB;
+  --color-tray:      #EAEFF6;
 }
 
 * { box-sizing: border-box; }
